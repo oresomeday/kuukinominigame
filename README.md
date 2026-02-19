@@ -1,1 +1,1 @@
-# kuukiminigame
+# kuukinominigame
