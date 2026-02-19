@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Game 4 - 元素クイズ RUSH!</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#0a0a1a;min-height:100vh;overflow:hidden;touch-action:manipulation}
+
+.back-btn{position:fixed;top:15px;left:15px;background:linear-gradient(180deg,#6c0000,#8b0000);border:2px solid #ff3030;color:#fff;width:50px;height:50px;border-radius:50%;font-size:1.5rem;cursor:pointer;z-index:9999;box-shadow:0 4px 15px rgba(139,0,0,0.5);display:flex;align-items:center;justify-content:center;transition:all .2s}
+.back-btn:active{transform:scale(.9)}
+
+#game{width:100vw;height:100vh;max-width:500px;margin:0 auto;position:relative;overflow:hidden}
+.screen{display:none;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;padding:15px;position:absolute;top:0;left:0}
+.screen.active{display:flex}
+
+#title{background:#000;position:relative;overflow:hidden}
+.bg-effects{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none}
+.cyber-grid{position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(0,255,255,.03) 1px,transparent 1px),linear-gradient(rgba(0,255,255,.03) 1px,transparent 1px);background-size:30px 30px;animation:gridMove 20s linear infinite}
+@keyframes gridMove{0%{background-position:0 0}100%{background-position:30px 30px}}
+.aurora{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 20% 20%,rgba(255,0,128,.3) 0%,transparent 50%),radial-gradient(ellipse at 80% 30%,rgba(0,255,255,.3) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(128,0,255,.3) 0%,transparent 50%);animation:auroraShift 8s ease-in-out infinite}
+@keyframes auroraShift{0%,100%{opacity:.8}50%{opacity:1}}
+.particles{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden}
+.particle{position:absolute;border-radius:50%;animation:floatUp 10s infinite;opacity:0}
+@keyframes floatUp{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-100vh) scale(1);opacity:0}}
+
+.title-content{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;padding:20px}
+.title-logo{text-align:center;margin-bottom:auto;padding-top:8vh}
+.title-icons{font-size:2em;display:flex;gap:8px;justify-content:center;margin-bottom:15px;animation:bounce .6s ease-in-out infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+.element-icon{width:50px;height:50px;border:2px solid;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:bold}
+.element-icon.h{background:linear-gradient(135deg,#ff6b6b,#ee5a5a);border-color:#ff8888}
+.element-icon.o{background:linear-gradient(135deg,#4ecdc4,#3dbdb5);border-color:#6edddd}
+.element-icon.au{background:linear-gradient(135deg,#ffd700,#ffcc00);border-color:#ffe666}
+.element-icon .symbol{font-size:1.2em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.element-icon .number{font-size:.5em;color:rgba(255,255,255,.8)}
+
+.title-text{font-size:2.2em;font-weight:900;color:#fff;text-shadow:0 0 10px #fff,0 0 20px #ff00ff,0 0 40px #ff00ff;animation:textPulse 1s ease-in-out infinite}
+@keyframes textPulse{0%,100%{text-shadow:0 0 10px #fff,0 0 20px #ff00ff,0 0 40px #ff00ff}50%{text-shadow:0 0 20px #fff,0 0 40px #00ffff,0 0 60px #00ffff}}
+.title-sub{font-size:1em;color:#ffcc00;letter-spacing:.3em;margin-top:10px;text-shadow:0 0 20px #ffcc00}
+
+.highscore-box{background:rgba(0,0,0,.6);border:2px solid #ffcc00;border-radius:15px;padding:10px 30px;margin-top:20px;text-align:center}
+.highscore-label{color:#888;font-size:.8em}
+.highscore-value{color:#ffcc00;font-size:1.5em;font-weight:bold}
+
+.clear-status{display:none;margin-top:12px;padding:6px 20px;background:rgba(0,255,100,.15);border:2px solid #00ff66;border-radius:20px;color:#00ff88;font-size:.9em;font-weight:bold;text-shadow:0 0 10px #00ff66}
+
+.start-btn{position:relative;background:transparent;border:none;padding:22px 80px;font-size:1.8em;font-weight:bold;color:#fff;cursor:pointer;overflow:hidden;transition:all .3s;border-radius:50px;margin-bottom:auto}
+.start-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(45deg,#ff0080,#ff00ff,#00ffff,#00ff88);background-size:400%;animation:gradientShift 2s ease infinite;border-radius:50px;z-index:-2}
+@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.start-btn::after{content:'';position:absolute;inset:3px;background:rgba(0,0,0,.85);border-radius:47px;z-index:-1}
+.start-btn:active{transform:scale(.95)}
+.start-btn:active::after{background:rgba(0,0,0,.6)}
+
+.hint{color:#888;font-size:.85em;padding-bottom:8vh;text-align:center;line-height:1.6}
+
+.hud{position:absolute;top:0;left:0;right:0;padding:8px 12px;padding-left:70px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(0,0,0,.9) 0%,transparent 100%);z-index:10}
+.hud-item{display:flex;align-items:center;gap:5px;color:#fff;font-weight:bold}
+.lives{font-size:1.1em}
+.pass-count{color:#ffcc00;font-size:.85em;text-shadow:0 0 8px #ffcc00}
+.score{color:#00ffff;font-size:1.2em;text-shadow:0 0 10px #00ffff}
+.streak{color:#ffcc00;font-size:1em;text-shadow:0 0 10px #ffcc00}
+
+.progress-wrap{position:absolute;top:53px;left:0;right:0;height:6px;background:rgba(255,255,255,.08);z-index:10}
+.progress-bar{height:100%;background:linear-gradient(90deg,#ffd700,#ffaa00);transition:width .3s ease;box-shadow:0 0 8px #ffd700}
+.progress-bar.full{background:linear-gradient(90deg,#00ff66,#00cc44);box-shadow:0 0 12px #00ff66;animation:progressPulse .4s}
+@keyframes progressPulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+.timer-wrap{position:absolute;top:45px;left:0;right:0;height:8px;background:rgba(255,255,255,.1)}
+.timer-bar{height:100%;background:linear-gradient(90deg,#00ff88,#00ffff);transition:width .05s linear;box-shadow:0 0 10px currentColor}
+.timer-bar.warn{background:linear-gradient(90deg,#ffcc00,#ff9900)}
+.timer-bar.danger{background:linear-gradient(90deg,#ff0044,#ff0088);animation:timerPulse .15s infinite}
+@keyframes timerPulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.mission-banner{position:absolute;top:66px;left:0;right:0;text-align:center;z-index:10}
+.mission-text{display:inline-block;background:rgba(0,0,0,.9);color:#fff;padding:8px 20px;border-radius:30px;font-size:.9em;font-weight:bold;border:3px solid #ffcc00;text-shadow:0 0 10px #ffcc00;animation:missionPop .3s ease-out}
+@keyframes missionPop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+
+#gameplay{background:linear-gradient(180deg,#0a0a2e 0%,#1a0a2e 100%)}
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding-top:110px;position:relative}
+
+.question-box{background:linear-gradient(135deg,rgba(20,20,60,.9),rgba(40,20,60,.9));border:3px solid #666;border-radius:20px;padding:15px 25px;text-align:center;margin-bottom:20px;min-width:280px;max-width:350px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.question-label{color:#888;font-size:.8em;margin-bottom:8px}
+.question-content{font-size:1.4em;font-weight:bold;color:#fff;min-height:45px;display:flex;align-items:center;justify-content:center;line-height:1.4}
+.question-text{font-size:.85em;line-height:1.5}
+
+.element-display{width:90px;height:90px;border:4px solid #00ffff;border-radius:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a3a5a,#0a2a4a);box-shadow:0 0 30px rgba(0,255,255,.3)}
+.element-display .atomic-num{font-size:.7em;color:#88ccff}
+.element-display .symbol{font-size:2.2em;color:#fff;text-shadow:0 0 20px #00ffff}
+.element-display .name{font-size:.55em;color:#aaa}
+
+.combine-display{display:flex;align-items:center;gap:10px}
+.combine-element{width:60px;height:60px;border:3px solid #ff88ff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#3a1a5a,#2a0a4a);box-shadow:0 0 20px rgba(255,0,255,.3)}
+.combine-element .symbol{font-size:1.5em;color:#fff}
+.combine-element .name{font-size:.5em;color:#ccc}
+.combine-plus{font-size:2em;color:#ff88ff;text-shadow:0 0 10px #ff00ff}
+.combine-arrow{font-size:1.5em;color:#88ffff;margin-left:5px}
+
+.formula-display{font-size:1.8em;color:#88ffff;text-shadow:0 0 15px #00ffff;padding:10px 20px;background:rgba(0,50,80,.5);border-radius:10px;border:2px solid #00aaaa}
+.formula-display sub{font-size:.7em}
+
+.choices{display:grid;gap:10px;width:100%;max-width:350px;padding:0 10px}
+.choices.cols-2{grid-template-columns:1fr 1fr}
+.choices.cols-1{grid-template-columns:1fr}
+
+.choice-btn{background:linear-gradient(180deg,#2a2a5a,#1a1a4a);border:3px solid #555;border-radius:15px;padding:15px 12px;font-size:1em;font-weight:bold;color:#fff;cursor:pointer;transition:all .15s;box-shadow:0 5px 15px rgba(0,0,0,.4)}
+.choice-btn:active{transform:scale(.95)}
+.choice-btn:hover{border-color:#00ffff;box-shadow:0 0 20px rgba(0,255,255,.3)}
+.choice-btn.correct{background:linear-gradient(180deg,#00aa44,#008833);border-color:#00ff66;animation:correctPulse .3s}
+.choice-btn.wrong{background:linear-gradient(180deg,#aa0044,#880033);border-color:#ff0066;animation:wrongShake .3s}
+.choice-btn.disabled{pointer-events:none;opacity:.6}
+.choice-btn.big{padding:22px 18px;font-size:1.2em}
+@keyframes correctPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes wrongShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+
+.pass-btn{margin-top:15px;padding:12px 30px;background:linear-gradient(180deg,#3a3a1a,#2a2a0a);border:2px solid #886600;border-radius:25px;color:#ffcc00;font-size:.95em;font-weight:bold;cursor:pointer;transition:all .2s;box-shadow:0 3px 10px rgba(136,102,0,.3)}
+.pass-btn:active{transform:scale(.95)}
+.pass-btn:disabled{opacity:.25;pointer-events:none;border-color:#444;color:#666}
+
+.popup{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:2.5em;font-weight:bold;pointer-events:none;z-index:1000;animation:popAnim .5s forwards}
+@keyframes popAnim{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}100%{opacity:0;transform:translate(-50%,-80%) scale(1)}}
+.popup.correct{color:#00ff88;text-shadow:0 0 30px #00ff88,0 0 60px #00ff88}
+.popup.wrong{color:#ff0044;text-shadow:0 0 30px #ff0044}
+.popup.combo{color:#ffcc00;text-shadow:0 0 30px #ffcc00,0 0 60px #ffcc00;font-size:2.8em}
+.popup.pass{color:#ffcc00;text-shadow:0 0 20px #ffcc00,0 0 40px #ffcc00;font-size:2em}
+.popup.newrecord{color:#ff00ff;text-shadow:0 0 30px #ff00ff,0 0 60px #ff00ff;font-size:2em}
+
+.splash{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3em;font-weight:900;color:#fff;text-shadow:0 0 20px #fff,0 0 40px #00ffff;z-index:100;animation:splashAnim .6s forwards;text-align:center}
+@keyframes splashAnim{0%{opacity:0;transform:translate(-50%,-50%) scale(2.5)}40%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.8)}}
+
+.flash{position:fixed;inset:0;pointer-events:none;z-index:999}
+.flash.hit{animation:flashGreen .12s}
+.flash.miss{animation:flashRed .2s}
+@keyframes flashGreen{from{background:rgba(0,255,100,.4)}to{background:transparent}}
+@keyframes flashRed{from{background:rgba(255,0,50,.5)}to{background:transparent}}
+
+.clear-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.85);z-index:5000;animation:clearFade 3s forwards}
+@keyframes clearFade{0%{opacity:0}10%{opacity:1}75%{opacity:1}100%{opacity:0}}
+.clear-banner{text-align:center;animation:clearPop .5s cubic-bezier(.68,-.55,.265,1.55)}
+@keyframes clearPop{0%{transform:scale(0)}100%{transform:scale(1)}}
+
+#result{position:relative;overflow:hidden}
+#result .result-aurora{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 50% 50%,rgba(255,0,0,.15) 0%,transparent 60%)}
+.result-content{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center}
+.result-icon-container{position:relative;margin-bottom:15px}
+.result-icon{font-size:5em;animation:iconEntry .6s cubic-bezier(.68,-.55,.265,1.55)}
+@keyframes iconEntry{0%{transform:scale(0) rotate(-180deg);opacity:0}100%{transform:scale(1) rotate(0deg);opacity:1}}
+.result-title{font-size:2em;font-weight:900;margin-bottom:10px;color:#fff}
+.result-title.newrecord{color:#ffcc00;text-shadow:0 0 20px #ffcc00;animation:recordPulse .5s ease-in-out infinite alternate}
+@keyframes recordPulse{from{transform:scale(1)}to{transform:scale(1.05)}}
+.result-score-box{background:linear-gradient(135deg,rgba(0,0,0,.6),rgba(30,30,60,.6));border:2px solid rgba(0,255,255,.3);border-radius:15px;padding:15px 50px;margin:10px 0;text-align:center}
+.result-score-label{color:#888;font-size:.8em;text-transform:uppercase}
+.result-score-value{font-size:2.8em;font-weight:900;color:#00ffff;text-shadow:0 0 30px #00ffff}
+.result-stats{background:rgba(0,0,0,.4);border-radius:10px;padding:10px 25px;margin:10px 0}
+.stat-row{display:flex;justify-content:space-between;color:#fff;font-size:.95em;padding:5px 0;gap:30px}
+.stat-value{font-weight:bold}
+.stat-value.cyan{color:#00ffff}
+.stat-value.gold{color:#ffd700}
+.result-buttons{display:flex;flex-direction:column;gap:8px;margin-top:15px}
+.btn{background:linear-gradient(145deg,#ff0066,#cc0052);color:#fff;border:none;padding:14px 50px;font-size:1.2em;font-weight:bold;border-radius:50px;cursor:pointer;box-shadow:0 5px 25px rgba(255,0,102,.4);transition:all .2s}
+.btn:active{transform:scale(.95)}
+.btn-cyan{background:linear-gradient(145deg,#00cccc,#009999);box-shadow:0 5px 25px rgba(0,204,204,.4)}
+.btn-gray{background:linear-gradient(145deg,#555,#333);box-shadow:0 3px 15px rgba(0,0,0,.3)}
+.btn-small{padding:10px 30px;font-size:1em}
+.question-num{position:absolute;top:106px;right:15px;background:rgba(0,0,0,.6);color:#aaa;padding:5px 12px;border-radius:15px;font-size:.85em}
+.level-indicator{position:absolute;top:106px;left:15px;background:linear-gradient(135deg,rgba(255,0,128,.8),rgba(128,0,255,.8));color:#fff;padding:5px 12px;border-radius:15px;font-size:.85em;font-weight:bold}
+.clear-achieved{margin-top:10px;padding:8px 20px;background:rgba(0,255,100,.1);border:1px solid rgba(0,255,100,.4);border-radius:12px;color:#00ff88;font-size:1em;font-weight:bold;text-align:center}
+.clear-progress{position:absolute;top:106px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#ffd700;padding:4px 14px;border-radius:12px;font-size:.75em;font-weight:bold;border:1px solid rgba(255,215,0,.3);white-space:nowrap}
+</style>
+</head>
+<body>
+<button class="back-btn" onclick="goBack()">←</button>
+<div id="game">
+<div class="flash" id="flash"></div>
+
+<div id="title" class="screen active">
+<div class="bg-effects">
+<div class="cyber-grid"></div>
+<div class="aurora"></div>
+<div class="particles" id="particles"></div>
+</div>
+<div class="title-content">
+<div class="title-logo">
+<div class="title-icons">
+<div class="element-icon h"><span class="number">1</span><span class="symbol">H</span></div>
+<div class="element-icon o"><span class="number">8</span><span class="symbol">O</span></div>
+<div class="element-icon au"><span class="number">79</span><span class="symbol">Au</span></div>
+</div>
+<div class="title-text">元素クイズ RUSH!</div>
+<div class="title-sub">GAME 4</div>
+<div class="highscore-box">
+<div class="highscore-label">🏆 HIGH SCORE</div>
+<div class="highscore-value" id="title-highscore">0</div>
+</div>
+<div class="clear-status" id="clear-status">✅ ステージクリア済み</div>
+</div>
+<button class="start-btn" onclick="startGame()">▶ START</button>
+<div class="hint">
+🎯 15問目到達でステージクリア！<br>
+⏭️ パスは3回まで使えます<br>
+ライフがなくなるまで挑戦！
+</div>
+</div>
+</div>
+
+<div id="gameplay" class="screen">
+<div class="hud">
+<div class="hud-item"><span class="lives" id="lives">❤️❤️❤️</span></div>
+<div class="hud-item"><span class="pass-count" id="pass-count">⏭️3</span></div>
+<div class="hud-item"><span class="streak" id="streak"></span></div>
+<div class="hud-item"><span class="score" id="score">0</span></div>
+</div>
+<div class="timer-wrap"><div class="timer-bar" id="timer"></div></div>
+<div class="progress-wrap"><div class="progress-bar" id="progress"></div></div>
+<div class="mission-banner"><div class="mission-text" id="mission-text"></div></div>
+<div class="level-indicator" id="level">Lv.1</div>
+<div class="clear-progress" id="clear-progress">🎯 Q.1 / Q.15</div>
+<div class="question-num" id="question-num">Q.1</div>
+<div class="game-area" id="area"></div>
+</div>
+
+<div id="result" class="screen">
+<div class="result-aurora"></div>
+<div class="result-content" id="result-content"></div>
+</div>
+</div>
+
+<script>
+const GAME_NUMBER=4;
+const CLEAR_TARGET=15;
+
+const ELEMENTS=[
+{num:1,symbol:'H',name:'水素',reading:'すいそ',group:'非金属',state:'気体'},
+{num:2,symbol:'He',name:'ヘリウム',reading:'へりうむ',group:'希ガス',state:'気体'},
+{num:3,symbol:'Li',name:'リチウム',reading:'りちうむ',group:'アルカリ金属',state:'固体'},
+{num:6,symbol:'C',name:'炭素',reading:'たんそ',group:'非金属',state:'固体'},
+{num:7,symbol:'N',name:'窒素',reading:'ちっそ',group:'非金属',state:'気体'},
+{num:8,symbol:'O',name:'酸素',reading:'さんそ',group:'非金属',state:'気体'},
+{num:9,symbol:'F',name:'フッ素',reading:'ふっそ',group:'ハロゲン',state:'気体'},
+{num:10,symbol:'Ne',name:'ネオン',reading:'ねおん',group:'希ガス',state:'気体'},
+{num:11,symbol:'Na',name:'ナトリウム',reading:'なとりうむ',group:'アルカリ金属',state:'固体'},
+{num:12,symbol:'Mg',name:'マグネシウム',reading:'まぐねしうむ',group:'アルカリ土類金属',state:'固体'},
+{num:13,symbol:'Al',name:'アルミニウム',reading:'あるみにうむ',group:'金属',state:'固体'},
+{num:14,symbol:'Si',name:'ケイ素',reading:'けいそ',group:'半金属',state:'固体'},
+{num:15,symbol:'P',name:'リン',reading:'りん',group:'非金属',state:'固体'},
+{num:16,symbol:'S',name:'硫黄',reading:'いおう',group:'非金属',state:'固体'},
+{num:17,symbol:'Cl',name:'塩素',reading:'えんそ',group:'ハロゲン',state:'気体'},
+{num:18,symbol:'Ar',name:'アルゴン',reading:'あるごん',group:'希ガス',state:'気体'},
+{num:19,symbol:'K',name:'カリウム',reading:'かりうむ',group:'アルカリ金属',state:'固体'},
+{num:20,symbol:'Ca',name:'カルシウム',reading:'かるしうむ',group:'アルカリ土類金属',state:'固体'},
+{num:26,symbol:'Fe',name:'鉄',reading:'てつ',group:'遷移金属',state:'固体'},
+{num:29,symbol:'Cu',name:'銅',reading:'どう',group:'遷移金属',state:'固体'},
+{num:30,symbol:'Zn',name:'亜鉛',reading:'あえん',group:'遷移金属',state:'固体'},
+{num:35,symbol:'Br',name:'臭素',reading:'しゅうそ',group:'ハロゲン',state:'液体'},
+{num:47,symbol:'Ag',name:'銀',reading:'ぎん',group:'遷移金属',state:'固体'},
+{num:53,symbol:'I',name:'ヨウ素',reading:'ようそ',group:'ハロゲン',state:'固体'},
+{num:79,symbol:'Au',name:'金',reading:'きん',group:'遷移金属',state:'固体'},
+{num:80,symbol:'Hg',name:'水銀',reading:'すいぎん',group:'遷移金属',state:'液体'},
+{num:82,symbol:'Pb',name:'鉛',reading:'なまり',group:'金属',state:'固体'}
+];
+
+const COMPOUNDS=[
+{formula:'H₂O',name:'水',elements:['H','O'],hint:'生命に欠かせない液体',category:'酸化物',color:'無色',state:'液体'},
+{formula:'CO₂',name:'二酸化炭素',elements:['C','O'],hint:'炭酸飲料のシュワシュワ',category:'酸化物',color:'無色',state:'気体'},
+{formula:'NaCl',name:'塩化ナトリウム',elements:['Na','Cl'],hint:'食塩の正体',category:'塩',color:'白色',state:'固体'},
+{formula:'NH₃',name:'アンモニア',elements:['N','H'],hint:'刺激臭のある気体',category:'水素化合物',color:'無色',state:'気体'},
+{formula:'CH₄',name:'メタン',elements:['C','H'],hint:'都市ガスの主成分',category:'炭化水素',color:'無色',state:'気体'},
+{formula:'HCl',name:'塩化水素',elements:['H','Cl'],hint:'塩酸の成分',category:'酸',color:'無色',state:'気体'},
+{formula:'H₂SO₄',name:'硫酸',elements:['H','S','O'],hint:'強い酸性の液体',category:'酸',color:'無色',state:'液体'},
+{formula:'NaOH',name:'水酸化ナトリウム',elements:['Na','O','H'],hint:'苛性ソーダとも呼ばれる',category:'塩基',color:'白色',state:'固体'},
+{formula:'CaCO₃',name:'炭酸カルシウム',elements:['Ca','C','O'],hint:'石灰石・貝殻の成分',category:'塩',color:'白色',state:'固体'},
+{formula:'Fe₂O₃',name:'酸化鉄(III)',elements:['Fe','O'],hint:'赤さびの正体',category:'酸化物',color:'赤褐色',state:'固体'},
+{formula:'NaHCO₃',name:'炭酸水素ナトリウム',elements:['Na','H','C','O'],hint:'重曹・ベーキングソーダ',category:'塩',color:'白色',state:'固体'},
+{formula:'CuSO₄',name:'硫酸銅',elements:['Cu','S','O'],hint:'青い結晶になる',category:'塩',color:'青色',state:'固体'},
+{formula:'MgO',name:'酸化マグネシウム',elements:['Mg','O'],hint:'便秘薬にも使われる',category:'酸化物',color:'白色',state:'固体'},
+{formula:'SiO₂',name:'二酸化ケイ素',elements:['Si','O'],hint:'ガラス・石英の主成分',category:'酸化物',color:'無色',state:'固体'},
+{formula:'CO',name:'一酸化炭素',elements:['C','O'],hint:'無色無臭の有毒ガス',category:'酸化物',color:'無色',state:'気体'},
+{formula:'NO₂',name:'二酸化窒素',elements:['N','O'],hint:'大気汚染物質の一つ',category:'酸化物',color:'赤褐色',state:'気体'},
+{formula:'SO₂',name:'二酸化硫黄',elements:['S','O'],hint:'温泉や火山の匂い',category:'酸化物',color:'無色',state:'気体'},
+{formula:'C₆H₁₂O₆',name:'グルコース',elements:['C','H','O'],hint:'ブドウ糖のこと',category:'糖類',color:'白色',state:'固体'},
+{formula:'C₂H₅OH',name:'エタノール',elements:['C','H','O'],hint:'お酒のアルコール',category:'アルコール',color:'無色',state:'液体'},
+{formula:'CH₃COOH',name:'酢酸',elements:['C','H','O'],hint:'食酢の酸っぱさの元',category:'有機酸',color:'無色',state:'液体'},
+{formula:'C₃H₈',name:'プロパン',elements:['C','H'],hint:'LPガスの主成分',category:'炭化水素',color:'無色',state:'気体'},
+{formula:'CH₃OH',name:'メタノール',elements:['C','H','O'],hint:'木精とも呼ばれる毒性アルコール',category:'アルコール',color:'無色',state:'液体'},
+{formula:'HNO₃',name:'硝酸',elements:['H','N','O'],hint:'強酸で酸化力が強い',category:'酸',color:'無色',state:'液体'},
+{formula:'H₂O₂',name:'過酸化水素',elements:['H','O'],hint:'オキシドールの成分',category:'酸化物',color:'無色',state:'液体'},
+{formula:'KOH',name:'水酸化カリウム',elements:['K','O','H'],hint:'苛性カリとも呼ばれる',category:'塩基',color:'白色',state:'固体'},
+{formula:'Ca(OH)₂',name:'水酸化カルシウム',elements:['Ca','O','H'],hint:'消石灰のこと',category:'塩基',color:'白色',state:'固体'},
+{formula:'Na₂CO₃',name:'炭酸ナトリウム',elements:['Na','C','O'],hint:'洗濯ソーダとも呼ばれる',category:'塩',color:'白色',state:'固体'},
+{formula:'KCl',name:'塩化カリウム',elements:['K','Cl'],hint:'減塩調味料に使用',category:'塩',color:'白色',state:'固体'},
+{formula:'CaO',name:'酸化カルシウム',elements:['Ca','O'],hint:'生石灰のこと',category:'酸化物',color:'白色',state:'固体'},
+{formula:'ZnO',name:'酸化亜鉛',elements:['Zn','O'],hint:'日焼け止めに使われる',category:'酸化物',color:'白色',state:'固体'},
+{formula:'AgNO₃',name:'硝酸銀',elements:['Ag','N','O'],hint:'写真の現像に使われた',category:'塩',color:'白色',state:'固体'},
+{formula:'FeCl₃',name:'塩化鉄(III)',elements:['Fe','Cl'],hint:'水溶液は黄褐色',category:'塩',color:'黄褐色',state:'固体'}
+];
+
+const COMPOUND_QUIZZES=[
+{q:'料理に使う調味料「食塩」の化学式は？',a:'NaCl',wrong:['KCl','CaCl₂','NaOH']},
+{q:'砂糖の主成分「ブドウ糖」の化学名は？',a:'グルコース',wrong:['フルクトース','スクロース','マルトース']},
+{q:'食酢の酸っぱさの原因物質は？',a:'酢酸',wrong:['塩酸','硫酸','クエン酸']},
+{q:'お酒に含まれるアルコールは？',a:'エタノール',wrong:['メタノール','プロパノール','ブタノール']},
+{q:'炭酸飲料に含まれる気体は？',a:'二酸化炭素',wrong:['酸素','窒素','一酸化炭素']},
+{q:'減塩調味料に使われる塩化物は？',a:'塩化カリウム',wrong:['塩化ナトリウム','塩化マグネシウム','塩化カルシウム']},
+{q:'重曹（ベーキングソーダ）の化学式は？',a:'NaHCO₃',wrong:['NaCl','Na₂CO₃','NaOH']},
+{q:'洗濯ソーダの正式名は？',a:'炭酸ナトリウム',wrong:['炭酸カルシウム','炭酸水素ナトリウム','炭酸カリウム']},
+{q:'オキシドールの主成分は？',a:'過酸化水素',wrong:['過酸化ナトリウム','酸化水素','水酸化水素']},
+{q:'日焼け止めに使われる白い粉末は？',a:'酸化亜鉛',wrong:['酸化鉄','酸化銅','酸化カルシウム']},
+{q:'ガラスの主成分は？',a:'二酸化ケイ素',wrong:['二酸化炭素','酸化鉄','酸化アルミニウム']},
+{q:'地球温暖化の原因となる気体は？',a:'二酸化炭素',wrong:['酸素','窒素','水素']},
+{q:'赤さびの正体は？',a:'酸化鉄(III)',wrong:['酸化銅','酸化アルミニウム','酸化亜鉛']},
+{q:'大気汚染物質の赤褐色の気体は？',a:'二酸化窒素',wrong:['二酸化炭素','二酸化硫黄','一酸化炭素']},
+{q:'温泉の硫黄臭の原因物質は？',a:'二酸化硫黄',wrong:['二酸化炭素','二酸化窒素','アンモニア']},
+{q:'石灰石や貝殻の主成分は？',a:'炭酸カルシウム',wrong:['炭酸ナトリウム','塩化カルシウム','硫酸カルシウム']},
+{q:'無色無臭で有毒なガスは？',a:'一酸化炭素',wrong:['二酸化炭素','窒素','酸素']},
+{q:'苛性ソーダとも呼ばれる強アルカリは？',a:'水酸化ナトリウム',wrong:['水酸化カリウム','水酸化カルシウム','水酸化マグネシウム']},
+{q:'刺激臭のある気体で、トイレの臭いは？',a:'アンモニア',wrong:['塩素','硫化水素','二酸化硫黄']},
+{q:'塩酸の気体成分は？',a:'塩化水素',wrong:['塩素','水素','塩化ナトリウム']},
+{q:'都市ガスの主成分は？',a:'メタン',wrong:['プロパン','エタン','ブタン']},
+{q:'LPガスの主成分は？',a:'プロパン',wrong:['メタン','エタン','ブタン']},
+{q:'水の電気分解で得られる気体は？',a:'水素と酸素',wrong:['窒素と酸素','水素と窒素','酸素と二酸化炭素']},
+{q:'便秘薬に使われる白い粉末は？',a:'酸化マグネシウム',wrong:['酸化カルシウム','酸化亜鉛','酸化鉄']},
+{q:'生理食塩水の成分は？',a:'塩化ナトリウム',wrong:['塩化カリウム','塩化カルシウム','炭酸ナトリウム']},
+{q:'消毒用アルコールの主成分は？',a:'エタノール',wrong:['メタノール','プロパノール','イソプロパノール']},
+{q:'うがい薬の茶色い成分は何を含む？',a:'ヨウ素',wrong:['鉄','銅','臭素']},
+{q:'生石灰の化学式は？',a:'CaO',wrong:['Ca(OH)₂','CaCO₃','CaCl₂']},
+{q:'消石灰の化学式は？',a:'Ca(OH)₂',wrong:['CaO','CaCO₃','CaSO₄']},
+{q:'硫酸銅の結晶は何色？',a:'青色',wrong:['赤色','緑色','白色']},
+{q:'写真の現像に使われた銀の化合物は？',a:'硝酸銀',wrong:['塩化銀','酸化銀','硫化銀']},
+{q:'鋼鉄に使われる主な元素は？',a:'鉄と炭素',wrong:['鉄と銅','鉄とアルミニウム','鉄と亜鉛']},
+{q:'私たちが吸う空気で体に必要なのは？',a:'酸素',wrong:['窒素','二酸化炭素','アルゴン']},
+{q:'私たちが呼吸で出す気体は？',a:'二酸化炭素',wrong:['酸素','窒素','水素']},
+{q:'植物の光合成で出る気体は？',a:'酸素',wrong:['二酸化炭素','窒素','水素']},
+{q:'植物の光合成で使う気体は？',a:'二酸化炭素',wrong:['酸素','窒素','水素']},
+{q:'酸性の代表的な物質は？',a:'塩酸',wrong:['水酸化ナトリウム','食塩','砂糖']},
+{q:'アルカリ性（塩基性）の代表物質は？',a:'水酸化ナトリウム',wrong:['塩酸','硫酸','食塩']},
+{q:'中和反応で酸と塩基から生成されるのは？',a:'塩と水',wrong:['酸化物','金属','気体']},
+{q:'酸化と還元が同時に起こる反応を？',a:'酸化還元反応',wrong:['中和反応','置換反応','分解反応']},
+{q:'水溶液が青色になる銅の化合物は？',a:'硫酸銅',wrong:['塩化銅','酸化銅','硝酸銅']},
+{q:'赤褐色のさびを作る酸化物は？',a:'酸化鉄(III)',wrong:['酸化銅','酸化亜鉛','酸化アルミニウム']},
+{q:'塩化鉄(III)の水溶液は何色？',a:'黄褐色',wrong:['青色','緑色','無色']},
+{q:'常温で液体の化合物（水以外）は？',a:'エタノール',wrong:['塩化ナトリウム','グルコース','二酸化炭素']},
+{q:'常温で気体の有機化合物は？',a:'メタン',wrong:['エタノール','グルコース','酢酸']},
+{q:'腐った卵のような臭いがする気体は？',a:'硫化水素',wrong:['二酸化硫黄','アンモニア','塩素']},
+{q:'プールで感じる独特の臭いの原因は？',a:'塩素',wrong:['アンモニア','硫化水素','二酸化窒素']},
+{q:'酢の酸っぱい匂いの原因物質は？',a:'酢酸',wrong:['塩酸','クエン酸','硝酸']}
+];
+
+const FEATURE_QUIZZES=[
+{q:'空気中に最も多く含まれる元素は？',a:'窒素',wrong:['酸素','水素','炭素']},
+{q:'人体に最も多く含まれる元素は？',a:'酸素',wrong:['炭素','水素','窒素']},
+{q:'ダイヤモンドを構成する元素は？',a:'炭素',wrong:['ケイ素','酸素','窒素']},
+{q:'骨や歯に多く含まれる元素は？',a:'カルシウム',wrong:['リン','鉄','マグネシウム']},
+{q:'血液のヘモグロビンに含まれる元素は？',a:'鉄',wrong:['銅','亜鉛','マグネシウム']},
+{q:'電線によく使われる金属元素は？',a:'銅',wrong:['鉄','アルミニウム','銀']},
+{q:'10円玉の主成分となる元素は？',a:'銅',wrong:['鉄','亜鉛','アルミニウム']},
+{q:'風船を浮かせるのに使う元素は？',a:'ヘリウム',wrong:['水素','窒素','ネオン']},
+{q:'食塩に含まれるハロゲンは？',a:'塩素',wrong:['フッ素','ヨウ素','臭素']},
+{q:'スマホのバッテリーに使われるアルカリ金属は？',a:'リチウム',wrong:['ナトリウム','カリウム','カルシウム']},
+{q:'最も軽い元素は？',a:'水素',wrong:['ヘリウム','リチウム','酸素']},
+{q:'常温で液体の金属元素は？',a:'水銀',wrong:['鉛','銀','亜鉛']},
+{q:'黄金色の貴金属元素は？',a:'金',wrong:['銀','銅','鉄']},
+{q:'半導体チップの材料に使われる元素は？',a:'ケイ素',wrong:['炭素','鉄','銅']},
+{q:'歯磨き粉に入っているハロゲンは？',a:'フッ素',wrong:['塩素','ヨウ素','臭素']},
+{q:'うがい薬に含まれるハロゲンは？',a:'ヨウ素',wrong:['塩素','フッ素','臭素']},
+{q:'アルミホイルの材料となる元素は？',a:'アルミニウム',wrong:['鉄','銅','亜鉛']},
+{q:'マッチの材料に使われる元素は？',a:'リン',wrong:['硫黄','炭素','窒素']},
+{q:'温泉の匂いの原因となる元素は？',a:'硫黄',wrong:['窒素','リン','塩素']},
+{q:'バナナに多く含まれるアルカリ金属は？',a:'カリウム',wrong:['ナトリウム','カルシウム','マグネシウム']},
+{q:'光るネオンサインに使われる希ガスは？',a:'ネオン',wrong:['アルゴン','ヘリウム','窒素']},
+{q:'常温で液体の非金属元素は？',a:'臭素',wrong:['塩素','ヨウ素','水銀']}
+];
+
+const QUESTION_TYPES=[
+{type:'symbol_to_name',label:'元素記号 → 元素名',icon:'🔤',generate:(el,wrong)=>({display:'symbol',question:el.symbol,answer:el.name,choices:shuffle([el.name,...wrong.slice(0,3).map(e=>e.name)])})},
+{type:'name_to_symbol',label:'元素名 → 元素記号',icon:'⚛️',generate:(el,wrong)=>({display:'text',question:el.name,answer:el.symbol,choices:shuffle([el.symbol,...wrong.slice(0,3).map(e=>e.symbol)])})},
+{type:'num_to_symbol',label:'原子番号 → 元素',icon:'🔢',generate:(el,wrong)=>({display:'number',question:`原子番号 ${el.num}`,answer:el.symbol,choices:shuffle([el.symbol,wrong[0].symbol])})},
+{type:'reading_to_symbol',label:'読み方 → 元素記号',icon:'📖',generate:(el,wrong)=>({display:'text',question:`「${el.reading}」`,answer:el.symbol,choices:shuffle([el.symbol,...wrong.slice(0,3).map(e=>e.symbol)])})},
+{type:'element_to_group',label:'元素 → 分類',icon:'🏷️',generate:(el)=>{const groups=[...new Set(ELEMENTS.map(e=>e.group))];const wg=groups.filter(g=>g!==el.group);return{display:'element',question:el,answer:el.group,choices:shuffle([el.group,...shuffle(wg).slice(0,3)])}}},
+{type:'element_state',label:'元素 → 常温での状態',icon:'🌡️',generate:(el)=>({display:'element',question:el,answer:el.state,choices:shuffle(['固体','液体','気体'])})},
+{type:'feature_quiz',label:'特徴クイズ',icon:'💡',generate:()=>{const q=FEATURE_QUIZZES[Math.floor(Math.random()*FEATURE_QUIZZES.length)];return{display:'feature',question:q.q,answer:q.a,choices:shuffle([q.a,...shuffle(q.wrong).slice(0,3)])}}},
+{type:'combine_elements',label:'元素の組み合わせ',icon:'🧪',generate:()=>{const c=COMPOUNDS[Math.floor(Math.random()*COMPOUNDS.length)];const wc=COMPOUNDS.filter(x=>x.name!==c.name);return{display:'combine',question:c,answer:c.name,choices:shuffle([c.name,...shuffle(wc).slice(0,3).map(x=>x.name)])}}},
+{type:'formula_to_name',label:'化学式 → 名前',icon:'📝',generate:()=>{const c=COMPOUNDS[Math.floor(Math.random()*COMPOUNDS.length)];const wc=COMPOUNDS.filter(x=>x.name!==c.name);return{display:'formula',question:c.formula,answer:c.name,choices:shuffle([c.name,...shuffle(wc).slice(0,3).map(x=>x.name)])}}},
+{type:'name_to_formula',label:'名前 → 化学式',icon:'🔬',generate:()=>{const c=COMPOUNDS[Math.floor(Math.random()*COMPOUNDS.length)];const wc=COMPOUNDS.filter(x=>x.formula!==c.formula);return{display:'text',question:c.name,answer:c.formula,choices:shuffle([c.formula,...shuffle(wc).slice(0,3).map(x=>x.formula)])}}},
+{type:'compound_quiz',label:'化合物クイズ',icon:'🎯',generate:()=>{const q=COMPOUND_QUIZZES[Math.floor(Math.random()*COMPOUND_QUIZZES.length)];return{display:'feature',question:q.q,answer:q.a,choices:shuffle([q.a,...shuffle(q.wrong).slice(0,3)])}}},
+{type:'compound_hint',label:'ヒントから化合物',icon:'💭',generate:()=>{const c=COMPOUNDS[Math.floor(Math.random()*COMPOUNDS.length)];const wc=COMPOUNDS.filter(x=>x.name!==c.name);return{display:'feature',question:`「${c.hint}」といえば？`,answer:c.name,choices:shuffle([c.name,...shuffle(wc).slice(0,3).map(x=>x.name)])}}},
+{type:'compound_color',label:'化合物の色',icon:'🎨',generate:()=>{const cc=COMPOUNDS.filter(c=>c.color&&c.color!=='無色');const c=cc[Math.floor(Math.random()*cc.length)];const cols=['白色','青色','赤褐色','黄褐色','緑色','黒色'];const wc=cols.filter(x=>x!==c.color);return{display:'feature',question:`${c.name}は何色？`,answer:c.color,choices:shuffle([c.color,...shuffle(wc).slice(0,3)])}}},
+{type:'compound_state',label:'化合物の状態',icon:'🌡️',generate:()=>{const c=COMPOUNDS[Math.floor(Math.random()*COMPOUNDS.length)];return{display:'feature',question:`${c.name}の常温での状態は？`,answer:c.state,choices:shuffle(['固体','液体','気体'])}}},
+{type:'compound_category',label:'化合物の分類',icon:'📋',generate:()=>{const c=COMPOUNDS[Math.floor(Math.random()*COMPOUNDS.length)];const cats=[...new Set(COMPOUNDS.map(x=>x.category))];const wc=cats.filter(x=>x!==c.category);return{display:'feature',question:`${c.name}はどの種類？`,answer:c.category,choices:shuffle([c.category,...shuffle(wc).slice(0,3)])}}}
+];
+
+function shuffle(a){const arr=[...a];for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+function getRandomElements(exclude,count){return shuffle(ELEMENTS.filter(e=>e.num!==exclude.num)).slice(0,count)}
+function getElementBySymbol(s){return ELEMENTS.find(e=>e.symbol===s)}
+
+(function(){
+const container=document.getElementById('particles');container.innerHTML='';
+for(let i=0;i<20;i++){const p=document.createElement('div');p.className='particle';p.style.left=Math.random()*100+'%';p.style.animationDelay=Math.random()*10+'s';p.style.animationDuration=(6+Math.random()*6)+'s';const size=2+Math.random()*4;p.style.width=size+'px';p.style.height=size+'px';const colors=['#ff00ff','#00ffff','#ffff00','#00ff88'];const color=colors[Math.floor(Math.random()*colors.length)];p.style.background=color;p.style.boxShadow=`0 0 ${size*3}px ${color}`;container.appendChild(p)}
+})();
+
+let G={questionNum:0,lives:3,score:0,streak:0,maxStreak:0,correctCount:0,currentQuestion:null,currentType:null,timer:null,timeLeft:10000,maxTime:10000,gameOver:false,answered:false,level:1,passes:3,cleared:false};
+let highScore=parseInt(localStorage.getItem('elementQuizHighScore')||'0');
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+function goBack(){clearInterval(G.timer);G.gameOver=true;window.location.href='index.html?menu=1'}
+
+function backToTitle(){clearInterval(G.timer);G.gameOver=true;document.getElementById('title-highscore').textContent=highScore.toLocaleString();updateClearStatus();showScreen('title')}
+
+function updateClearStatus(){
+document.getElementById('clear-status').style.display=localStorage.getItem('gameClear_'+GAME_NUMBER)==='true'?'block':'none';
+}
+
+function updateHUD(){
+document.getElementById('lives').textContent='❤️'.repeat(G.lives)+'🖤'.repeat(3-G.lives);
+document.getElementById('score').textContent=G.score.toLocaleString();
+document.getElementById('streak').textContent=G.streak>1?`🔥${G.streak}`:'';
+document.getElementById('question-num').textContent=`Q.${G.questionNum}`;
+document.getElementById('level').textContent=`Lv.${G.level}`;
+document.getElementById('pass-count').textContent=G.passes>0?`⏭️${G.passes}`:'⏭️0';
+const current=Math.min(G.questionNum,CLEAR_TARGET);
+document.getElementById('clear-progress').textContent=G.cleared?'🏆 クリア済み！':`🎯 Q.${current} / Q.${CLEAR_TARGET}`;
+const pct=Math.min(G.questionNum/CLEAR_TARGET*100,100);
+const pbar=document.getElementById('progress');
+pbar.style.width=pct+'%';
+if(pct>=100)pbar.classList.add('full');else pbar.classList.remove('full');
+}
+
+function popup(text,type){const p=document.createElement('div');p.className=`popup ${type}`;p.textContent=text;document.body.appendChild(p);setTimeout(()=>p.remove(),600)}
+
+function flash(type){const f=document.getElementById('flash');f.className='flash '+type;setTimeout(()=>f.className='flash',250)}
+
+function showSplash(text,callback,delay=600){document.getElementById('area').innerHTML=`<div class="splash">${text}</div>`;setTimeout(callback,delay)}
+
+function startTimer(){
+clearInterval(G.timer);G.timeLeft=G.maxTime;
+const bar=document.getElementById('timer');bar.style.width='100%';bar.className='timer-bar';
+G.timer=setInterval(()=>{
+G.timeLeft-=30;const pct=G.timeLeft/G.maxTime*100;bar.style.width=pct+'%';
+if(pct<20)bar.className='timer-bar danger';else if(pct<40)bar.className='timer-bar warn';
+if(G.timeLeft<=0){clearInterval(G.timer);if(!G.answered)questionFailed()}
+},30);
+}
+
+function startGame(){
+G.questionNum=0;G.lives=3;G.score=0;G.streak=0;G.maxStreak=0;G.correctCount=0;G.gameOver=false;G.level=1;G.maxTime=10000;G.passes=3;G.cleared=false;
+showScreen('gameplay');
+showSplash('READY?',()=>showSplash('GO!',nextQuestion,400),500);
+}
+
+function nextQuestion(){
+if(G.lives<=0||G.gameOver)return endGame();
+G.questionNum++;G.answered=false;
+G.level=Math.floor(G.questionNum/5)+1;
+G.maxTime=Math.max(4000,10000-(G.level-1)*800);
+checkStageClear();
+const qType=QUESTION_TYPES[Math.floor(Math.random()*QUESTION_TYPES.length)];
+G.currentType=qType;
+if(['feature_quiz','combine_elements','formula_to_name','name_to_formula','compound_quiz','compound_hint','compound_color','compound_state','compound_category'].includes(qType.type)){
+G.currentQuestion=qType.generate();
+}else{
+const element=ELEMENTS[Math.floor(Math.random()*ELEMENTS.length)];
+const wrongElements=getRandomElements(element,3);
+G.currentQuestion=qType.generate(element,wrongElements);
+G.currentQuestion.correctElement=element;
+}
+document.getElementById('mission-text').innerHTML=`${qType.icon} ${qType.label}`;
+renderQuestion();updateHUD();startTimer();
+}
+
+function renderQuestion(){
+const q=G.currentQuestion;const choiceCount=q.choices.length;
+let questionHTML='',labelText='答えは？';
+if(q.display==='symbol'){questionHTML=`<div class="element-display"><span class="symbol">${q.question}</span></div>`;labelText='この元素記号は？'}
+else if(q.display==='element'){questionHTML=`<div class="element-display"><span class="atomic-num">${q.question.num}</span><span class="symbol">${q.question.symbol}</span><span class="name">${q.question.name}</span></div>`;labelText='この元素は？'}
+else if(q.display==='number'){questionHTML=`<span style="font-size:1.4em">${q.question}</span>`;labelText='この原子番号の元素は？'}
+else if(q.display==='feature'){questionHTML=`<span class="question-text">${q.question}</span>`;labelText='問題'}
+else if(q.display==='combine'){const els=q.question.elements.slice(0,2);const e1=getElementBySymbol(els[0]);const e2=getElementBySymbol(els[1]);questionHTML=`<div class="combine-display"><div class="combine-element"><span class="symbol">${els[0]}</span><span class="name">${e1?e1.name:''}</span></div><span class="combine-plus">+</span><div class="combine-element"><span class="symbol">${els[1]}</span><span class="name">${e2?e2.name:''}</span></div><span class="combine-arrow">→</span></div>`;labelText='組み合わせると何ができる？'}
+else if(q.display==='formula'){questionHTML=`<div class="formula-display">${q.question}</div>`;labelText='この化学式の名前は？'}
+else{questionHTML=`<span>${q.question}</span>`}
+const isTwoChoice=choiceCount===2;const isThreeChoice=choiceCount===3;
+const colClass=(isTwoChoice||isThreeChoice)?'cols-1':'cols-2';
+const btnClass=isTwoChoice?'choice-btn big':'choice-btn';
+let html=`<div class="question-box"><div class="question-label">${labelText}</div><div class="question-content">${questionHTML}</div></div><div class="choices ${colClass}">${q.choices.map((c,i)=>`<button class="${btnClass}" onclick="selectAnswer(${i})" data-answer="${c}">${c}</button>`).join('')}</div>`;
+html+=`<button class="pass-btn" onclick="usePass()" ${G.passes<=0?'disabled':''}>⏭️ パス（残り${G.passes}回）</button>`;
+document.getElementById('area').innerHTML=html;
+}
+
+function usePass(){
+if(G.answered||G.gameOver||G.passes<=0)return;
+G.passes--;G.answered=true;clearInterval(G.timer);
+popup('PASS ⏭️','pass');updateHUD();
+setTimeout(()=>nextQuestion(),600);
+}
+
+function selectAnswer(index){
+if(G.answered||G.gameOver)return;G.answered=true;clearInterval(G.timer);
+const buttons=document.querySelectorAll('.choice-btn');const selectedBtn=buttons[index];
+const selectedAnswer=selectedBtn.dataset.answer;const isCorrect=selectedAnswer===G.currentQuestion.answer;
+buttons.forEach(btn=>btn.classList.add('disabled'));
+const passBtn=document.querySelector('.pass-btn');if(passBtn)passBtn.disabled=true;
+if(isCorrect){selectedBtn.classList.add('correct');answerCorrect()}
+else{selectedBtn.classList.add('wrong');buttons.forEach(btn=>{if(btn.dataset.answer===G.currentQuestion.answer)btn.classList.add('correct')});answerWrong()}
+}
+
+function answerCorrect(){
+G.streak++;G.correctCount++;if(G.streak>G.maxStreak)G.maxStreak=G.streak;
+const timeBonus=Math.floor(G.timeLeft/100);const streakBonus=G.streak*50;const levelBonus=G.level*20;
+G.score+=100+timeBonus+streakBonus+levelBonus;
+flash('hit');
+if(G.streak>=5)popup(`🔥${G.streak}連続!`,'combo');else if(G.streak>=3)popup(`${G.streak}連続!`,'correct');else popup('CORRECT!','correct');
+if(G.score>highScore){highScore=G.score;localStorage.setItem('elementQuizHighScore',highScore)}
+updateHUD();
+setTimeout(()=>nextQuestion(),700);
+}
+
+function answerWrong(){
+G.lives--;G.streak=0;flash('miss');popup('WRONG!','wrong');updateHUD();
+setTimeout(()=>{if(G.lives<=0)endGame();else nextQuestion()},900);
+}
+
+function questionFailed(){
+G.answered=true;G.lives--;G.streak=0;
+const buttons=document.querySelectorAll('.choice-btn');
+buttons.forEach(btn=>{btn.classList.add('disabled');if(btn.dataset.answer===G.currentQuestion.answer)btn.classList.add('correct')});
+const passBtn=document.querySelector('.pass-btn');if(passBtn)passBtn.disabled=true;
+flash('miss');popup('TIME UP!','wrong');updateHUD();
+setTimeout(()=>{if(G.lives<=0)endGame();else nextQuestion()},900);
+}
+
+function checkStageClear(){
+if(G.questionNum>=CLEAR_TARGET&&!G.cleared){
+G.cleared=true;
+localStorage.setItem('gameClear_'+GAME_NUMBER,'true');
+showClearOverlay();
+}
+}
+
+function showClearOverlay(){
+const overlay=document.createElement('div');overlay.className='clear-overlay';
+overlay.innerHTML=`<div class="clear-banner"><div style="font-size:4em">🏆</div><div style="font-size:1.8em;font-weight:900;color:#ffd700;margin:10px 0;text-shadow:0 0 20px #ffd700">ステージクリア！</div><div style="color:#ffe0a0;font-size:1.1em">✨ ヒント文字を獲得しました ✨</div><div style="color:#aaa;font-size:.8em;margin-top:8px">ゲームは続行できます</div></div>`;
+document.body.appendChild(overlay);setTimeout(()=>overlay.remove(),3000);
+}
+
+function endGame(){
+G.gameOver=true;clearInterval(G.timer);
+const isNewRecord=G.score>=highScore&&G.score>0;
+if(isNewRecord){highScore=G.score;localStorage.setItem('elementQuizHighScore',highScore)}
+const passUsed=3-G.passes;
+document.getElementById('result-content').innerHTML=`
+<div class="result-icon-container"><div class="result-icon">${isNewRecord?'🎉':'💀'}</div></div>
+<div class="result-title ${isNewRecord?'newrecord':''}">${isNewRecord?'🏆 NEW RECORD! 🏆':'GAME OVER'}</div>
+${G.cleared?'<div class="clear-achieved">🏆 ステージクリア達成！</div>':''}
+<div class="result-score-box"><div class="result-score-label">SCORE</div><div class="result-score-value" id="score-counter">0</div></div>
+<div class="result-stats">
+<div class="stat-row"><span>📊 到達レベル</span><span class="stat-value cyan">Lv.${G.level}</span></div>
+<div class="stat-row"><span>📋 到達問題</span><span class="stat-value cyan">Q.${G.questionNum}</span></div>
+<div class="stat-row"><span>✅ 正解数</span><span class="stat-value cyan">${G.correctCount}</span></div>
+<div class="stat-row"><span>🔥 最大連続正解</span><span class="stat-value gold">${G.maxStreak}</span></div>
+<div class="stat-row"><span>⏭️ パス使用</span><span class="stat-value cyan">${passUsed}回</span></div>
+<div class="stat-row"><span>🏆 ハイスコア</span><span class="stat-value gold">${highScore.toLocaleString()}</span></div>
+</div>
+<div class="result-buttons">
+<button class="btn" onclick="startGame()">🔄 RETRY</button>
+<button class="btn btn-cyan btn-small" onclick="backToTitle()">🏠 TITLE</button>
+<button class="btn btn-gray btn-small" onclick="goBack()">← メニューに戻る</button>
+</div>`;
+showScreen('result');
+let current=0;const target=G.score;const step=target/60;
+const counter=document.getElementById('score-counter');
+const countUp=setInterval(()=>{current+=step;if(current>=target){current=target;clearInterval(countUp)}counter.textContent=Math.floor(current).toLocaleString()},16);
+if(isNewRecord)popup('NEW RECORD!','newrecord');
+}
+
+document.getElementById('title-highscore').textContent=highScore.toLocaleString();
+updateClearStatus();
+</script>
+</body>
+</html>

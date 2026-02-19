@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FLAG BATTLE ENDLESS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        body {
+            font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+            background: #0a0a1a;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        .back-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: linear-gradient(180deg, #6c0000, #8b0000);
+            border: 2px solid #ff3030;
+            color: #fff;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 9999;
+            box-shadow: 0 4px 15px rgba(139,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .back-btn:active { transform: scale(0.9); }
+        #game {
+            width: 100vw;
+            height: 100vh;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .screen.active { display: flex; }
+
+        /* ===== タイトル画面 ===== */
+        #title {
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+        .bg-effects {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+        }
+        .cyber-grid {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 30px 30px; }
+        }
+        .aurora {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(255,0,128,0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 30%, rgba(0,255,255,0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(128,0,255,0.3) 0%, transparent 50%);
+            animation: auroraShift 8s ease-in-out infinite;
+        }
+        @keyframes auroraShift {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        .particles {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: floatUp 10s infinite;
+            opacity: 0;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) scale(1); opacity: 0; }
+        }
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent 0px, transparent 2px,
+                rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px
+            );
+        }
+        .title-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%; height: 100%;
+            padding: 20px;
+        }
+        .title-logo {
+            text-align: center;
+            margin-bottom: auto;
+            padding-top: 15vh;
+        }
+        .title-icon {
+            font-size: 4.5em;
+            display: block;
+            margin-bottom: 15px;
+            animation: iconFloat 3s ease-in-out infinite, iconGlow 2s ease-in-out infinite alternate;
+            filter: drop-shadow(0 0 30px rgba(255,255,255,0.8));
+        }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        @keyframes iconGlow {
+            from { filter: drop-shadow(0 0 30px rgba(255,0,255,0.8)); }
+            to { filter: drop-shadow(0 0 50px rgba(0,255,255,0.8)); }
+        }
+        .title-text {
+            font-size: 2.5em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #fff;
+            text-shadow:
+                0 0 10px #fff, 0 0 20px #fff,
+                0 0 40px #ff00ff, 0 0 80px #ff00ff;
+            animation: textPulse 2s ease-in-out infinite;
+        }
+        @keyframes textPulse {
+            0%, 100% {
+                text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 40px #ff00ff, 0 0 80px #ff00ff;
+            }
+            50% {
+                text-shadow: 0 0 20px #fff, 0 0 40px #fff, 0 0 60px #00ffff, 0 0 100px #00ffff;
+            }
+        }
+        .title-sub {
+            font-size: 1em;
+            color: #0ff;
+            letter-spacing: 0.5em;
+            margin-top: 10px;
+            text-shadow: 0 0 20px #0ff;
+        }
+        .start-btn-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .start-btn {
+            position: relative;
+            background: transparent;
+            border: none;
+            padding: 22px 70px;
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .start-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, #ff0080, #ff00ff, #8000ff, #0080ff, #00ffff);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+            border-radius: 50px;
+            z-index: -2;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .start-btn::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: rgba(0,0,0,0.85);
+            border-radius: 47px;
+            z-index: -1;
+            transition: background 0.3s;
+        }
+        .start-btn:hover::after,
+        .start-btn:active::after {
+            background: rgba(0,0,0,0.6);
+        }
+        .start-btn span {
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 0 20px #fff;
+        }
+        .start-btn:active { transform: scale(0.95); }
+        .deco-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: auto;
+            padding-bottom: 12vh;
+        }
+        .deco-line {
+            width: 80px; height: 2px;
+            background: linear-gradient(90deg, transparent, #ff00ff, #00ffff, transparent);
+            animation: lineGlow 2s infinite;
+        }
+        @keyframes lineGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .deco-diamond {
+            width: 12px; height: 12px;
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            transform: rotate(45deg);
+            animation: diamondSpin 4s linear infinite;
+            box-shadow: 0 0 15px #ff00ff;
+        }
+        @keyframes diamondSpin {
+            from { transform: rotate(45deg); }
+            to { transform: rotate(405deg); }
+        }
+
+        /* ===== HUD ===== */
+        .hud {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 8px 12px;
+            padding-left: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+            z-index: 10;
+        }
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .lives { font-size: 1.2em; }
+        .fever-gauge {
+            width: 80px; height: 12px;
+            background: #333;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 2px solid #666;
+        }
+        .fever-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff00ff, #ffff00, #00ffff);
+            background-size: 200% 100%;
+            animation: feverGradient 1s linear infinite;
+            transition: width 0.3s;
+        }
+        @keyframes feverGradient {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+        .score {
+            color: #00ffff;
+            font-size: 1.1em;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        .combo-display {
+            position: absolute;
+            top: 45px; right: 15px;
+            color: #ffff00;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-shadow: 0 0 15px #ffff00;
+        }
+        .round-display {
+            position: absolute;
+            top: 45px; left: 70px;
+            color: #00ff88;
+            font-size: 1em;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00ff88;
+        }
+        .pass-display {
+            position: absolute;
+            top: 68px; left: 70px;
+            color: #888;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .clear-line-display {
+            position: absolute;
+            top: 88px; left: 70px;
+            color: #ff8800;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-shadow: 0 0 8px #ff8800;
+        }
+
+        /* ===== タイマー ===== */
+        .timer-wrap {
+            position: absolute;
+            top: 40px; left: 0; right: 0;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+        }
+        .timer-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ffff);
+            transition: width 0.05s linear;
+            box-shadow: 0 0 10px currentColor;
+        }
+        .timer-bar.warn { background: linear-gradient(90deg, #ffcc00, #ff9900); }
+        .timer-bar.danger {
+            background: linear-gradient(90deg, #ff0044, #ff0088);
+            animation: timerPulse 0.2s infinite;
+        }
+        @keyframes timerPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* ===== ゲームプレイ ===== */
+        #gameplay {
+            background: linear-gradient(180deg, #0a0a2e 0%, #1a0a2e 100%);
+        }
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding-top: 60px;
+            padding-bottom: 70px;
+            position: relative;
+        }
+        .fever-mode .game-area {
+            animation: feverBg 0.3s infinite alternate;
+        }
+        @keyframes feverBg {
+            from { background: rgba(255, 0, 255, 0.15); }
+            to { background: rgba(0, 255, 255, 0.15); }
+        }
+        .round-splash {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4em;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 20px #fff, 0 0 40px #00ffff, 0 0 60px #00ffff;
+            z-index: 100;
+            animation: splashAnim 0.6s forwards;
+        }
+        @keyframes splashAnim {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(3) rotate(-10deg); }
+            40% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+        }
+
+        /* ===== 国旗ゲーム要素 ===== */
+        .instruction {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+            margin-bottom: 10px;
+            animation: instPop 0.3s ease-out;
+        }
+        @keyframes instPop {
+            from { transform: scale(1.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .sub-instruction {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        .flag-main {
+            width: 200px; height: 130px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            margin: 15px 0;
+            background: #fff;
+            animation: flagIn 0.25s ease-out;
+        }
+        .flag-main img { width: 100%; height: 100%; object-fit: cover; }
+        @keyframes flagIn {
+            from { transform: rotateY(90deg) scale(0.5); opacity: 0; }
+            to { transform: rotateY(0) scale(1); opacity: 1; }
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            max-width: 340px;
+        }
+        .opt {
+            background: linear-gradient(145deg, #3a3a6a, #2a2a5a);
+            border: 3px solid #5a5a8a;
+            color: #fff;
+            padding: 14px 8px;
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.1s;
+            text-align: center;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .opt:active { transform: scale(0.95); }
+        .opt.correct {
+            background: linear-gradient(145deg, #00cc66, #009944) !important;
+            border-color: #00ff88 !important;
+            animation: optCorrect 0.3s;
+        }
+        .opt.wrong {
+            background: linear-gradient(145deg, #cc0044, #990033) !important;
+            border-color: #ff0066 !important;
+            animation: optWrong 0.3s;
+        }
+        @keyframes optCorrect { 50% { transform: scale(1.1); } }
+        @keyframes optWrong {
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .flag-opt {
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 65px;
+            cursor: pointer;
+            border: 3px solid #444;
+            transition: all 0.1s;
+        }
+        .flag-opt img { width: 100%; height: 100%; object-fit: cover; }
+        .flag-opt.correct {
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0,255,136,0.8);
+        }
+        .flag-opt.wrong {
+            border-color: #ff0066;
+            box-shadow: 0 0 20px rgba(255,0,102,0.8);
+            opacity: 0.5;
+        }
+        .swipe-area {
+            width: 100%; height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .swipe-labels {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+        .swipe-label {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .swipe-label.left { background: #ff0066; color: #fff; }
+        .swipe-label.right { background: #00ccff; color: #fff; }
+        .swipe-card {
+            width: 180px; height: 120px;
+            background: #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+            cursor: grab;
+            touch-action: none;
+        }
+        .swipe-card img { width: 100%; height: 100%; object-fit: cover; }
+        .swipe-card.swiping-left { border: 4px solid #ff0066; }
+        .swipe-card.swiping-right { border: 4px solid #00ccff; }
+        .silhouette {
+            width: 200px; height: 130px;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 15px 0;
+            position: relative;
+        }
+        .silhouette img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: brightness(0);
+            transition: filter 0.5s;
+        }
+        .bomb-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 320px;
+        }
+        .bomb-item {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 3/2;
+            cursor: pointer;
+            border: 3px solid #444;
+            transition: all 0.1s;
+            position: relative;
+        }
+        .bomb-item img { width: 100%; height: 100%; object-fit: cover; }
+        .bomb-item.safe {
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0,255,136,0.6);
+        }
+        .bomb-item.explode { animation: explode 0.5s forwards; }
+        @keyframes explode {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); background: #ff0000; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        .bomb-item::after {
+            content: '💣';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+            opacity: 0;
+        }
+        .bomb-item.explode::after {
+            opacity: 1;
+            animation: bombShow 0.3s;
+        }
+        @keyframes bombShow {
+            from { transform: translate(-50%, -50%) scale(0); }
+            to { transform: translate(-50%, -50%) scale(1.5); }
+        }
+        .compare-wrap {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        .compare-card {
+            background: linear-gradient(145deg, #3a3a6a, #2a2a5a);
+            border: 3px solid #5a5a8a;
+            border-radius: 15px;
+            padding: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.1s;
+        }
+        .compare-card:active { transform: scale(0.95); }
+        .compare-card .mini-flag {
+            width: 90px; height: 58px;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .compare-card .mini-flag img { width: 100%; height: 100%; object-fit: cover; }
+        .compare-card .name { color: #fff; font-weight: bold; font-size: 0.85em; }
+        .compare-card.correct {
+            border-color: #00ff88;
+            box-shadow: 0 0 25px rgba(0,255,136,0.6);
+        }
+        .compare-card.wrong { border-color: #ff0066; opacity: 0.5; }
+
+        /* ===== パスボタン ===== */
+        .pass-container-fixed {
+            position: absolute;
+            bottom: 15px;
+            left: 0; right: 0;
+            text-align: center;
+            z-index: 10;
+            display: none;
+        }
+        .pass-container-fixed.active { display: block; }
+        .btn-pass {
+            background: linear-gradient(145deg, #555, #333);
+            color: #ccc;
+            border: 2px solid #666;
+            padding: 10px 30px;
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-pass:active { transform: scale(0.95); }
+        .btn-pass:disabled {
+            background: linear-gradient(145deg, #222, #111);
+            color: #444;
+            border-color: #333;
+            cursor: not-allowed;
+        }
+
+        /* ===== ポップアップ & フラッシュ ===== */
+        .popup {
+            position: fixed;
+            top: 45%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5em;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 1000;
+            animation: popAnim 0.5s forwards;
+        }
+        @keyframes popAnim {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+        }
+        .popup.nice { color: #00ff88; text-shadow: 0 0 30px #00ff88; }
+        .popup.great { color: #00ffff; text-shadow: 0 0 30px #00ffff; }
+        .popup.perfect { color: #ff00ff; text-shadow: 0 0 30px #ff00ff; }
+        .popup.combo { color: #ffff00; text-shadow: 0 0 30px #ffff00; }
+        .popup.miss { color: #ff0044; text-shadow: 0 0 30px #ff0044; }
+        .popup.pass { color: #888; text-shadow: 0 0 30px #888; }
+        .popup.fever {
+            color: #fff;
+            text-shadow: 0 0 30px #ff00ff, 0 0 60px #00ffff;
+            font-size: 3em;
+        }
+        .flash {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 999;
+        }
+        .flash.hit { animation: flashGreen 0.15s; }
+        .flash.miss { animation: flashRed 0.15s; }
+        .flash.pass { animation: flashGray 0.15s; }
+        @keyframes flashGreen {
+            from { background: rgba(0,255,100,0.4); }
+            to { background: transparent; }
+        }
+        @keyframes flashRed {
+            from { background: rgba(255,0,50,0.4); }
+            to { background: transparent; }
+        }
+        @keyframes flashGray {
+            from { background: rgba(128,128,128,0.3); }
+            to { background: transparent; }
+        }
+
+        /* ===== 結果画面 ===== */
+        #result { position: relative; overflow: hidden; }
+        #result.clear-bg {
+            background: radial-gradient(ellipse at center, #0a2a1a 0%, #0a0a1a 100%);
+        }
+        #result.lose-bg {
+            background: radial-gradient(ellipse at center, #1a1a3a 0%, #0a0a1a 100%);
+        }
+        #result .result-aurora {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            animation: loseAurora 3s ease-in-out infinite alternate;
+        }
+        #result.clear-bg .result-aurora {
+            background:
+                radial-gradient(ellipse at 30% 30%, rgba(0,255,128,0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 70%, rgba(0,255,255,0.2) 0%, transparent 50%);
+        }
+        #result.lose-bg .result-aurora {
+            background:
+                radial-gradient(ellipse at 30% 30%, rgba(255,0,128,0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 70%, rgba(0,255,255,0.2) 0%, transparent 50%);
+        }
+        @keyframes loseAurora {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+        .confetti-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .confetti {
+            position: absolute;
+            top: -20px;
+            animation: confettiFall linear infinite;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(1080deg); opacity: 0.8; }
+        }
+        .stars-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        .star {
+            position: absolute;
+            font-size: 1.5em;
+            animation: starTwinkle 1s ease-out forwards;
+        }
+        @keyframes starTwinkle {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
+            100% { transform: scale(0) rotate(360deg); opacity: 0; }
+        }
+        .result-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .result-icon-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .result-icon {
+            font-size: 5em;
+            animation: iconEntry 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            filter: drop-shadow(0 0 30px currentColor);
+        }
+        @keyframes iconEntry {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .icon-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 150px; height: 150px;
+            border: 3px solid rgba(0,255,255,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: ringExpand 1.5s ease-out infinite;
+        }
+        @keyframes ringExpand {
+            0% { width: 100px; height: 100px; opacity: 1; }
+            100% { width: 250px; height: 250px; opacity: 0; }
+        }
+        .result-title {
+            font-size: 2.2em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+        }
+        .result-title.clear-title {
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88;
+            animation: winPulse 0.5s infinite alternate;
+        }
+        .result-title.over-title {
+            color: #ff6688;
+            text-shadow: 0 0 20px #ff0044;
+        }
+        @keyframes winPulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+        .result-score-box {
+            background: linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(30,30,60,0.6) 100%);
+            border: 2px solid rgba(0,255,255,0.3);
+            border-radius: 20px;
+            padding: 20px 50px;
+            margin: 15px 0;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(0,255,255,0.2);
+            animation: boxAppear 0.5s ease-out 0.3s both;
+        }
+        @keyframes boxAppear {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .result-score-label {
+            color: #888;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            margin-bottom: 8px;
+        }
+        .result-score-value {
+            font-size: 3em;
+            font-weight: 900;
+            color: #00ffff;
+            text-shadow: 0 0 30px #00ffff;
+            font-family: 'Courier New', monospace;
+        }
+        .result-stats {
+            background: rgba(0,0,0,0.4);
+            border-radius: 15px;
+            padding: 15px 25px;
+            margin: 10px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+            animation: boxAppear 0.5s ease-out 0.5s both;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-size: 1em;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            gap: 30px;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-value {
+            font-weight: bold;
+            text-shadow: 0 0 10px currentColor;
+        }
+        .stat-value.cyan { color: #00ffff; }
+        .stat-value.gold { color: #ffd700; }
+        .stat-value.pink { color: #ff00ff; }
+        .stat-value.gray { color: #888; }
+        .stat-value.green { color: #00ff88; }
+        .result-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+            animation: boxAppear 0.5s ease-out 0.7s both;
+        }
+        .btn {
+            background: linear-gradient(145deg, #ff0066, #cc0052);
+            color: white;
+            border: none;
+            padding: 16px 45px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 30px rgba(255,0,102,0.5);
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            animation: btnShine 2s infinite;
+        }
+        @keyframes btnShine {
+            0% { left: -50%; }
+            100% { left: 150%; }
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-cyan {
+            background: linear-gradient(145deg, #00cccc, #009999);
+            box-shadow: 0 5px 30px rgba(0,204,204,0.5);
+        }
+        .btn-green {
+            background: linear-gradient(145deg, #00cc66, #009944);
+            box-shadow: 0 5px 30px rgba(0,204,100,0.5);
+        }
+        .btn-small { padding: 12px 30px; font-size: 1em; }
+        .highscore-badge {
+            background: linear-gradient(145deg, #ffd700, #ff8800);
+            color: #000;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            animation: badgePop 0.5s ease-out 1s both;
+            box-shadow: 0 0 30px rgba(255,215,0,0.5);
+        }
+        @keyframes badgePop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .clear-hint {
+            color: #4ecdc4;
+            font-size: 1em;
+            font-weight: bold;
+            margin-top: 10px;
+            animation: boxAppear 0.5s ease-out 0.9s both;
+            text-shadow: 0 0 15px rgba(78,205,196,0.5);
+        }
+        .redirect-msg {
+            color: #888;
+            font-size: 0.85em;
+            margin-top: 12px;
+            animation: boxAppear 0.5s ease-out 1.1s both;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="goBack()">←</button>
+
+    <div id="game">
+        <div class="flash" id="flash"></div>
+
+        <!-- タイトル画面 -->
+        <div id="title" class="screen active">
+            <div class="bg-effects">
+                <div class="cyber-grid"></div>
+                <div class="aurora"></div>
+                <div class="particles" id="particles"></div>
+                <div class="scanlines"></div>
+            </div>
+            <div class="title-content">
+                <div class="title-logo">
+                    <span class="title-icon">🌍</span>
+                    <div class="title-text">FLAG BATTLE</div>
+                    <div class="title-sub">ENDLESS MODE</div>
+                </div>
+                <div style="color:#ff8800; font-size:0.9em; margin-bottom:10px; text-shadow:0 0 10px #ff8800;">
+                    🎯 ROUND 15到達でクリア！
+                </div>
+                <div class="start-btn-wrap">
+                    <button class="start-btn" onclick="startGame()">
+                        <span>▶ START</span>
+                    </button>
+                </div>
+                <div style="color:#00ffff; font-size:1.2em; text-shadow:0 0 15px #00ffff;">
+                    🏆 BEST: <span id="best-score">0</span>
+                </div>
+                <div class="deco-container">
+                    <div class="deco-line"></div>
+                    <div class="deco-diamond"></div>
+                    <div class="deco-line"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ゲーム画面 -->
+        <div id="gameplay" class="screen">
+            <div class="hud">
+                <div class="hud-item">
+                    <span class="lives" id="lives">❤️❤️❤️</span>
+                </div>
+                <div class="hud-item">
+                    <span style="font-size:0.8em;">🔥</span>
+                    <div class="fever-gauge">
+                        <div class="fever-fill" id="fever-fill" style="width:0%"></div>
+                    </div>
+                </div>
+                <div class="hud-item">
+                    <span class="score" id="score">0</span>
+                </div>
+            </div>
+            <div class="round-display" id="round-display">ROUND 1</div>
+            <div class="pass-display" id="pass-display">⏭ <span id="pass-icons">⚪⚪⚪</span></div>
+            <div class="clear-line-display" id="clear-line">🎯 クリアまで: あと15</div>
+            <div class="combo-display" id="combo"></div>
+            <div class="timer-wrap">
+                <div class="timer-bar" id="timer"></div>
+            </div>
+            <div class="game-area" id="area"></div>
+            <div class="pass-container-fixed" id="pass-container">
+                <button class="btn-pass" id="pass-btn" onclick="handlePass()">⏭ パス</button>
+            </div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="result" class="screen">
+            <div class="result-aurora"></div>
+            <div class="confetti-container" id="confetti"></div>
+            <div class="stars-container" id="stars"></div>
+            <div class="result-content" id="result-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // ===== 設定 =====
+        const GAME_NUMBER = 2;
+        const CLEAR_ROUND = 15;
+
+        // ===== 国データ =====
+        const countries = [
+            {code:'jp',name:'日本',capital:'東京',area:377975,continent:'asia'},
+            {code:'cn',name:'中国',capital:'北京',area:9596961,continent:'asia'},
+            {code:'kr',name:'韓国',capital:'ソウル',area:100210,continent:'asia'},
+            {code:'kp',name:'北朝鮮',capital:'平壌',area:120538,continent:'asia'},
+            {code:'tw',name:'台湾',capital:'台北',area:36193,continent:'asia'},
+            {code:'mn',name:'モンゴル',capital:'ウランバートル',area:1564110,continent:'asia'},
+            {code:'th',name:'タイ',capital:'バンコク',area:513120,continent:'asia'},
+            {code:'vn',name:'ベトナム',capital:'ハノイ',area:331212,continent:'asia'},
+            {code:'ph',name:'フィリピン',capital:'マニラ',area:300000,continent:'asia'},
+            {code:'my',name:'マレーシア',capital:'クアラルンプール',area:330803,continent:'asia'},
+            {code:'sg',name:'シンガポール',capital:'シンガポール',area:728,continent:'asia'},
+            {code:'id',name:'インドネシア',capital:'ジャカルタ',area:1904569,continent:'asia'},
+            {code:'mm',name:'ミャンマー',capital:'ネピドー',area:676578,continent:'asia'},
+            {code:'kh',name:'カンボジア',capital:'プノンペン',area:181035,continent:'asia'},
+            {code:'la',name:'ラオス',capital:'ビエンチャン',area:236800,continent:'asia'},
+            {code:'bn',name:'ブルネイ',capital:'バンダルスリブガワン',area:5765,continent:'asia'},
+            {code:'in',name:'インド',capital:'ニューデリー',area:3287263,continent:'asia'},
+            {code:'pk',name:'パキスタン',capital:'イスラマバード',area:881913,continent:'asia'},
+            {code:'bd',name:'バングラデシュ',capital:'ダッカ',area:147570,continent:'asia'},
+            {code:'lk',name:'スリランカ',capital:'コロンボ',area:65610,continent:'asia'},
+            {code:'np',name:'ネパール',capital:'カトマンズ',area:147181,continent:'asia'},
+            {code:'bt',name:'ブータン',capital:'ティンプー',area:38394,continent:'asia'},
+            {code:'mv',name:'モルディブ',capital:'マレ',area:298,continent:'asia'},
+            {code:'sa',name:'サウジアラビア',capital:'リヤド',area:2149690,continent:'asia'},
+            {code:'ae',name:'UAE',capital:'アブダビ',area:83600,continent:'asia'},
+            {code:'qa',name:'カタール',capital:'ドーハ',area:11586,continent:'asia'},
+            {code:'kw',name:'クウェート',capital:'クウェート',area:17818,continent:'asia'},
+            {code:'ir',name:'イラン',capital:'テヘラン',area:1648195,continent:'asia'},
+            {code:'iq',name:'イラク',capital:'バグダッド',area:438317,continent:'asia'},
+            {code:'il',name:'イスラエル',capital:'エルサレム',area:20770,continent:'asia'},
+            {code:'tr',name:'トルコ',capital:'アンカラ',area:783562,continent:'europe'},
+            {code:'gb',name:'イギリス',capital:'ロンドン',area:242495,continent:'europe'},
+            {code:'fr',name:'フランス',capital:'パリ',area:643801,continent:'europe'},
+            {code:'de',name:'ドイツ',capital:'ベルリン',area:357114,continent:'europe'},
+            {code:'it',name:'イタリア',capital:'ローマ',area:301340,continent:'europe'},
+            {code:'es',name:'スペイン',capital:'マドリード',area:505992,continent:'europe'},
+            {code:'pt',name:'ポルトガル',capital:'リスボン',area:92212,continent:'europe'},
+            {code:'nl',name:'オランダ',capital:'アムステルダム',area:41543,continent:'europe'},
+            {code:'be',name:'ベルギー',capital:'ブリュッセル',area:30528,continent:'europe'},
+            {code:'ch',name:'スイス',capital:'ベルン',area:41285,continent:'europe'},
+            {code:'at',name:'オーストリア',capital:'ウィーン',area:83879,continent:'europe'},
+            {code:'se',name:'スウェーデン',capital:'ストックホルム',area:450295,continent:'europe'},
+            {code:'no',name:'ノルウェー',capital:'オスロ',area:385207,continent:'europe'},
+            {code:'dk',name:'デンマーク',capital:'コペンハーゲン',area:43094,continent:'europe'},
+            {code:'fi',name:'フィンランド',capital:'ヘルシンキ',area:338424,continent:'europe'},
+            {code:'ie',name:'アイルランド',capital:'ダブリン',area:70273,continent:'europe'},
+            {code:'pl',name:'ポーランド',capital:'ワルシャワ',area:312679,continent:'europe'},
+            {code:'cz',name:'チェコ',capital:'プラハ',area:78865,continent:'europe'},
+            {code:'hu',name:'ハンガリー',capital:'ブダペスト',area:93028,continent:'europe'},
+            {code:'gr',name:'ギリシャ',capital:'アテネ',area:131957,continent:'europe'},
+            {code:'ru',name:'ロシア',capital:'モスクワ',area:17098242,continent:'europe'},
+            {code:'ua',name:'ウクライナ',capital:'キーウ',area:603550,continent:'europe'},
+            {code:'ro',name:'ルーマニア',capital:'ブカレスト',area:238391,continent:'europe'},
+            {code:'bg',name:'ブルガリア',capital:'ソフィア',area:110879,continent:'europe'},
+            {code:'hr',name:'クロアチア',capital:'ザグレブ',area:56594,continent:'europe'},
+            {code:'rs',name:'セルビア',capital:'ベオグラード',area:88361,continent:'europe'},
+            {code:'sk',name:'スロバキア',capital:'ブラチスラバ',area:49035,continent:'europe'},
+            {code:'si',name:'スロベニア',capital:'リュブリャナ',area:20273,continent:'europe'},
+            {code:'ee',name:'エストニア',capital:'タリン',area:45339,continent:'europe'},
+            {code:'lv',name:'ラトビア',capital:'リガ',area:64559,continent:'europe'},
+            {code:'lt',name:'リトアニア',capital:'ビリニュス',area:65300,continent:'europe'},
+            {code:'is',name:'アイスランド',capital:'レイキャビク',area:103000,continent:'europe'},
+            {code:'eg',name:'エジプト',capital:'カイロ',area:1002450,continent:'africa'},
+            {code:'za',name:'南アフリカ',capital:'プレトリア',area:1221037,continent:'africa'},
+            {code:'ng',name:'ナイジェリア',capital:'アブジャ',area:923768,continent:'africa'},
+            {code:'ke',name:'ケニア',capital:'ナイロビ',area:580367,continent:'africa'},
+            {code:'et',name:'エチオピア',capital:'アディスアベバ',area:1104300,continent:'africa'},
+            {code:'gh',name:'ガーナ',capital:'アクラ',area:238533,continent:'africa'},
+            {code:'tz',name:'タンザニア',capital:'ドドマ',area:945087,continent:'africa'},
+            {code:'ma',name:'モロッコ',capital:'ラバト',area:446550,continent:'africa'},
+            {code:'dz',name:'アルジェリア',capital:'アルジェ',area:2381741,continent:'africa'},
+            {code:'tn',name:'チュニジア',capital:'チュニス',area:163610,continent:'africa'},
+            {code:'sn',name:'セネガル',capital:'ダカール',area:196722,continent:'africa'},
+            {code:'cm',name:'カメルーン',capital:'ヤウンデ',area:475442,continent:'africa'},
+            {code:'ug',name:'ウガンダ',capital:'カンパラ',area:241038,continent:'africa'},
+            {code:'zw',name:'ジンバブエ',capital:'ハラレ',area:390757,continent:'africa'},
+            {code:'us',name:'アメリカ',capital:'ワシントンD.C.',area:9833520,continent:'america'},
+            {code:'ca',name:'カナダ',capital:'オタワ',area:9984670,continent:'america'},
+            {code:'mx',name:'メキシコ',capital:'メキシコシティ',area:1964375,continent:'america'},
+            {code:'cu',name:'キューバ',capital:'ハバナ',area:109884,continent:'america'},
+            {code:'jm',name:'ジャマイカ',capital:'キングストン',area:10991,continent:'america'},
+            {code:'pa',name:'パナマ',capital:'パナマシティ',area:75417,continent:'america'},
+            {code:'cr',name:'コスタリカ',capital:'サンホセ',area:51100,continent:'america'},
+            {code:'gt',name:'グアテマラ',capital:'グアテマラシティ',area:108889,continent:'america'},
+            {code:'br',name:'ブラジル',capital:'ブラジリア',area:8515767,continent:'america'},
+            {code:'ar',name:'アルゼンチン',capital:'ブエノスアイレス',area:2780400,continent:'america'},
+            {code:'cl',name:'チリ',capital:'サンティアゴ',area:756102,continent:'america'},
+            {code:'co',name:'コロンビア',capital:'ボゴタ',area:1141748,continent:'america'},
+            {code:'pe',name:'ペルー',capital:'リマ',area:1285216,continent:'america'},
+            {code:'ve',name:'ベネズエラ',capital:'カラカス',area:916445,continent:'america'},
+            {code:'ec',name:'エクアドル',capital:'キト',area:256369,continent:'america'},
+            {code:'bo',name:'ボリビア',capital:'ラパス',area:1098581,continent:'america'},
+            {code:'py',name:'パラグアイ',capital:'アスンシオン',area:406752,continent:'america'},
+            {code:'uy',name:'ウルグアイ',capital:'モンテビデオ',area:176215,continent:'america'},
+            {code:'au',name:'オーストラリア',capital:'キャンベラ',area:7692024,continent:'oceania'},
+            {code:'nz',name:'ニュージーランド',capital:'ウェリントン',area:268021,continent:'oceania'},
+            {code:'fj',name:'フィジー',capital:'スバ',area:18274,continent:'oceania'},
+            {code:'pg',name:'パプアニューギニア',capital:'ポートモレスビー',area:462840,continent:'oceania'}
+        ];
+
+        // ===== ユーティリティ =====
+        const gameTypes = ['flagName','nameFlag','capital','bigger','smaller','swipe','bomb','silhouette'];
+        const flagUrl = code => `https://flagcdn.com/w320/${code}.png`;
+        const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+        const pick = (arr, n, ex = []) => shuffle(arr.filter(c => !ex.includes(c.code))).slice(0, n);
+
+        // ===== ハイスコア =====
+        let highScore = parseInt(localStorage.getItem('flagEndlessHighScore')) || 0;
+        document.getElementById('best-score').textContent = highScore.toLocaleString();
+
+        // ===== ゲーム状態 =====
+        let G = {
+            round: 0,
+            lives: 3,
+            score: 0,
+            combo: 0,
+            maxCombo: 0,
+            fever: 0,
+            isFever: false,
+            timer: null,
+            timeLeft: 0,
+            passUsed: 0,
+            maxPass: 3,
+            usedGames: [],
+            lastGame: ''
+        };
+
+        // ===== パーティクル =====
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDelay = Math.random() * 10 + 's';
+                p.style.animationDuration = (8 + Math.random() * 8) + 's';
+                const size = 2 + Math.random() * 5;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                const colors = ['#ff00ff','#00ffff','#ffff00','#ff0088','#00ff88'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                p.style.background = color;
+                p.style.boxShadow = `0 0 ${size*3}px ${color}`;
+                container.appendChild(p);
+            }
+        }
+        createParticles();
+
+        // ===== 紙吹雪・星 =====
+        function createConfetti() {
+            const container = document.getElementById('confetti');
+            container.innerHTML = '';
+            const shapes = ['■','●','▲','★','◆'];
+            const colors = ['#ff0066','#00ffff','#ffff00','#ff00ff','#00ff88','#ff8800'];
+            for (let i = 0; i < 60; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+                c.style.left = Math.random() * 100 + '%';
+                c.style.color = colors[Math.floor(Math.random() * colors.length)];
+                c.style.fontSize = (10 + Math.random() * 12) + 'px';
+                c.style.animationDuration = (2 + Math.random() * 3) + 's';
+                c.style.animationDelay = Math.random() * 2 + 's';
+                c.style.textShadow = `0 0 10px ${c.style.color}`;
+                container.appendChild(c);
+            }
+        }
+        function createStars() {
+            const container = document.getElementById('stars');
+            container.innerHTML = '';
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    const s = document.createElement('div');
+                    s.className = 'star';
+                    s.textContent = '✦';
+                    s.style.left = Math.random() * 100 + '%';
+                    s.style.top = Math.random() * 100 + '%';
+                    s.style.color = ['#ffd700','#fff','#00ffff'][Math.floor(Math.random() * 3)];
+                    container.appendChild(s);
+                    setTimeout(() => s.remove(), 1000);
+                }, i * 200);
+            }
+        }
+
+        // ===== 画面管理 =====
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('gameplay').classList.remove('fever-mode');
+            hidePassButton();
+        }
+
+        function render(html) {
+            document.getElementById('area').innerHTML = html;
+        }
+
+        function showSplash(text, cb, delay = 500) {
+            render(`<div class="round-splash">${text}</div>`);
+            setTimeout(cb, delay);
+        }
+
+        // ===== メニューに戻る =====
+        function goBack() {
+            window.location.href = 'index.html?menu=1';
+        }
+
+        // ===== HUD =====
+        function updateHUD() {
+            document.getElementById('lives').textContent = '❤️'.repeat(G.lives) + '🖤'.repeat(3 - G.lives);
+            document.getElementById('score').textContent = G.score.toLocaleString();
+            document.getElementById('combo').textContent = G.combo > 1 ? `${G.combo}コンボ!` : '';
+            document.getElementById('fever-fill').style.width = `${Math.min(G.fever, 100)}%`;
+            document.getElementById('round-display').textContent = `ROUND ${G.round}`;
+            const passRemaining = G.maxPass - G.passUsed;
+            document.getElementById('pass-icons').textContent = '⚪'.repeat(passRemaining) + '⚫'.repeat(G.passUsed);
+
+            // クリアライン表示
+            const remaining = CLEAR_ROUND - G.round;
+            const clearLine = document.getElementById('clear-line');
+            if (remaining > 0) {
+                clearLine.textContent = `🎯 クリアまで: あと${remaining}`;
+                clearLine.style.color = '#ff8800';
+            } else {
+                clearLine.textContent = `✅ クリア条件達成！`;
+                clearLine.style.color = '#00ff88';
+            }
+        }
+
+        // ===== タイマー =====
+        function getTimeForRound() {
+            return Math.max(2000, 5000 - (G.round - 1) * 80);
+        }
+        function startTimer(overrideTime) {
+            const time = overrideTime || getTimeForRound();
+            clearInterval(G.timer);
+            G.timeLeft = time;
+            const bar = document.getElementById('timer');
+            bar.style.width = '100%';
+            bar.className = 'timer-bar';
+            G.timer = setInterval(() => {
+                G.timeLeft -= 30;
+                const pct = G.timeLeft / time * 100;
+                bar.style.width = pct + '%';
+                if (pct < 25) bar.className = 'timer-bar danger';
+                else if (pct < 50) bar.className = 'timer-bar warn';
+                if (G.timeLeft <= 0) {
+                    clearInterval(G.timer);
+                    handleLose();
+                }
+            }, 30);
+        }
+        function stopTimer() { clearInterval(G.timer); }
+
+        // ===== パスボタン =====
+        function showPassButton() {
+            const container = document.getElementById('pass-container');
+            const btn = document.getElementById('pass-btn');
+            container.classList.add('active');
+            btn.disabled = G.passUsed >= G.maxPass;
+        }
+        function hidePassButton() {
+            document.getElementById('pass-container').classList.remove('active');
+        }
+
+        // ===== ゲーム開始 =====
+        function startGame() {
+            G.round = 0;
+            G.lives = 3;
+            G.score = 0;
+            G.combo = 0;
+            G.maxCombo = 0;
+            G.fever = 0;
+            G.isFever = false;
+            G.passUsed = 0;
+            G.usedGames = [];
+            G.lastGame = '';
+            showScreen('gameplay');
+            showSplash('READY', () => showSplash('GO!', nextRound, 300), 400);
+        }
+
+        // ===== 次のラウンド =====
+        function nextRound() {
+            if (G.lives <= 0) return endGame();
+            G.round++;
+            updateHUD();
+
+            if (G.fever >= 100 && !G.isFever) {
+                G.isFever = true;
+                document.getElementById('gameplay').classList.add('fever-mode');
+                popup('🔥 FEVER! 🔥', 'fever');
+            }
+
+            // クリアライン到達演出
+            if (G.round === CLEAR_ROUND) {
+                showSplash('✅ CLEAR LINE!', () => showSplash(G.round, playGame, 350), 500);
+            } else if (G.round % 10 === 1 && G.round > 1) {
+                showSplash(`🔥 ROUND ${G.round}!`, playGame, 500);
+            } else {
+                showSplash(G.round, playGame, 350);
+            }
+        }
+
+        // ===== ゲーム選択 =====
+        function playGame() {
+            let available = gameTypes.filter(t => t !== G.lastGame);
+            if (G.usedGames.length >= gameTypes.length - 2) G.usedGames = [];
+            available = available.filter(t => !G.usedGames.includes(t));
+            if (available.length === 0) available = gameTypes.filter(t => t !== G.lastGame);
+            const type = available[Math.floor(Math.random() * available.length)];
+            G.usedGames.push(type);
+            G.lastGame = type;
+            const games = {
+                flagName: gameFlagName, nameFlag: gameNameFlag, capital: gameCapital,
+                bigger: () => gameCompare('area', true, '📏 大きいのは？'),
+                smaller: () => gameCompare('area', false, '📏 小さいのは？'),
+                swipe: gameSwipe, bomb: gameBomb, silhouette: gameSilhouette
+            };
+            games[type]();
+            showPassButton();
+        }
+
+        // ===== ゲーム① 国旗→国名 =====
+        function gameFlagName() {
+            const correct = pick(countries, 1)[0];
+            const opts = shuffle([correct, ...pick(countries, 3, [correct.code])]);
+            render(`<div class="instruction">🎌 この国は？</div>
+                <div class="flag-main"><img src="${flagUrl(correct.code)}"></div>
+                <div class="options">${opts.map(o =>
+                    `<button class="opt" data-ok="${o.code === correct.code}">${o.name}</button>`
+                ).join('')}</div>`);
+            startTimer(); listen('.opt');
+        }
+
+        // ===== ゲーム② 国名→国旗 =====
+        function gameNameFlag() {
+            const correct = pick(countries, 1)[0];
+            const opts = shuffle([correct, ...pick(countries, 3, [correct.code])]);
+            render(`<div class="instruction">🏳️ ${correct.name}は？</div>
+                <div class="options">${opts.map(o =>
+                    `<div class="flag-opt" data-ok="${o.code === correct.code}"><img src="${flagUrl(o.code)}"></div>`
+                ).join('')}</div>`);
+            startTimer(); listen('.flag-opt');
+        }
+
+        // ===== ゲーム③ 首都 =====
+        function gameCapital() {
+            const correct = pick(countries, 1)[0];
+            const opts = shuffle([correct.capital, ...pick(countries, 3, [correct.code]).map(c => c.capital)]);
+            render(`<div class="instruction">🏛️ 首都は？</div>
+                <div class="flag-main"><img src="${flagUrl(correct.code)}"></div>
+                <div class="sub-instruction">${correct.name}</div>
+                <div class="options">${opts.map(o =>
+                    `<button class="opt" data-ok="${o === correct.capital}">${o}</button>`
+                ).join('')}</div>`);
+            startTimer(); listen('.opt');
+        }
+
+        // ===== ゲーム④⑤ 面積比較 =====
+        function gameCompare(prop, bigger, label) {
+            const [a, b] = pick(countries, 2);
+            const winner = a[prop] > b[prop] ? a : b;
+            const correct = bigger ? winner : (winner === a ? b : a);
+            render(`<div class="instruction">${label}</div>
+                <div class="compare-wrap">${[a, b].map(c => `
+                    <div class="compare-card" data-ok="${c.code === correct.code}">
+                        <div class="mini-flag"><img src="${flagUrl(c.code)}"></div>
+                        <div class="name">${c.name}</div>
+                    </div>`).join('')}</div>`);
+            startTimer(); listen('.compare-card');
+        }
+
+        // ===== ゲーム⑥ スワイプ =====
+        function gameSwipe() {
+            const leftCont = ['asia','europe'][Math.floor(Math.random() * 2)];
+            const rightCont = leftCont === 'asia' ? 'europe' : 'asia';
+            const leftLabel = leftCont === 'asia' ? 'アジア' : 'ヨーロッパ';
+            const rightLabel = rightCont === 'asia' ? 'アジア' : 'ヨーロッパ';
+            const pool = countries.filter(c => c.continent === leftCont || c.continent === rightCont);
+            const current = shuffle(pool)[0];
+            const isLeft = current.continent === leftCont;
+            render(`<div class="instruction">👈👉 振り分けろ!</div>
+                <div class="swipe-area">
+                    <div class="swipe-labels"><span class="swipe-label left">${leftLabel}</span><span class="swipe-label right">${rightLabel}</span></div>
+                    <div class="swipe-card" id="swipe-card"><img src="${flagUrl(current.code)}"></div>
+                </div><div class="sub-instruction">${current.name}</div>`);
+            startTimer();
+            const card = document.getElementById('swipe-card');
+            let startX = 0, currentX = 0, dragging = false;
+            const onStart = e => { dragging = true; startX = e.touches ? e.touches[0].clientX : e.clientX; card.style.transition = 'none'; };
+            const onMove = e => { if (!dragging) return; currentX = (e.touches ? e.touches[0].clientX : e.clientX) - startX;
+                card.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.1}deg)`;
+                card.classList.remove('swiping-left','swiping-right');
+                if (currentX < -30) card.classList.add('swiping-left');
+                if (currentX > 30) card.classList.add('swiping-right'); };
+            const onEnd = () => { if (!dragging) return; dragging = false; card.style.transition = 'transform 0.3s';
+                if (Math.abs(currentX) > 80) { stopTimer(); hidePassButton();
+                    const swipedLeft = currentX < 0; const correct = (swipedLeft && isLeft) || (!swipedLeft && !isLeft);
+                    card.style.transform = `translateX(${currentX > 0 ? 300 : -300}px) rotate(${currentX > 0 ? 30 : -30}deg)`; card.style.opacity = '0';
+                    setTimeout(() => correct ? handleWin() : handleLose(), 200);
+                } else { card.style.transform = ''; } };
+            card.addEventListener('mousedown', onStart); card.addEventListener('mousemove', onMove);
+            card.addEventListener('mouseup', onEnd); card.addEventListener('mouseleave', onEnd);
+            card.addEventListener('touchstart', onStart); card.addEventListener('touchmove', onMove); card.addEventListener('touchend', onEnd);
+        }
+
+        // ===== ゲーム⑦ 爆弾 =====
+        function gameBomb() {
+            const safe = pick(countries, 1)[0];
+            const bombs = pick(countries, 5, [safe.code]);
+            const items = shuffle([safe, ...bombs]);
+            render(`<div class="instruction">💣 ${safe.name}だけタップ!</div>
+                <div class="bomb-grid">${items.map(c =>
+                    `<div class="bomb-item" data-safe="${c.code === safe.code}"><img src="${flagUrl(c.code)}"></div>`
+                ).join('')}</div>`);
+            startTimer();
+            document.querySelectorAll('.bomb-item').forEach(el => {
+                el.onclick = () => { stopTimer(); hidePassButton();
+                    if (el.dataset.safe === 'true') { el.classList.add('safe'); handleWin(); }
+                    else { el.classList.add('explode'); document.querySelectorAll('.bomb-item').forEach(b => { if (b.dataset.safe === 'true') b.classList.add('safe'); }); handleLose(); } };
+            });
+        }
+
+        // ===== ゲーム⑧ シルエット =====
+        function gameSilhouette() {
+            const correct = pick(countries, 1)[0];
+            const opts = shuffle([correct, ...pick(countries, 3, [correct.code])]);
+            render(`<div class="instruction">🔮 どの国？</div>
+                <div class="silhouette" id="sil"><img src="${flagUrl(correct.code)}"></div>
+                <div class="options">${opts.map(o =>
+                    `<button class="opt" data-ok="${o.code === correct.code}">${o.name}</button>`
+                ).join('')}</div>`);
+            startTimer();
+            let brightness = 0;
+            const brighten = setInterval(() => { brightness += 0.03; const sil = document.getElementById('sil');
+                if (sil) sil.querySelector('img').style.filter = `brightness(${brightness})`; if (brightness >= 1) clearInterval(brighten); }, 100);
+            listen('.opt', () => clearInterval(brighten));
+        }
+
+        // ===== 汎用リスナー =====
+        function listen(sel, extraCb) {
+            document.querySelectorAll(sel).forEach(el => {
+                el.onclick = () => { stopTimer(); hidePassButton();
+                    const ok = el.dataset.ok === 'true'; el.classList.add(ok ? 'correct' : 'wrong');
+                    if (!ok) showCorrect(sel); if (extraCb) extraCb();
+                    ok ? handleWin() : handleLose(); };
+            });
+        }
+        function showCorrect(sel) {
+            document.querySelectorAll(sel).forEach(e => { if (e.dataset.ok === 'true') e.classList.add('correct'); });
+        }
+
+        // ===== 正解 =====
+        function handleWin() {
+            hidePassButton();
+            G.combo++; if (G.combo > G.maxCombo) G.maxCombo = G.combo;
+            const timeBonus = Math.floor(G.timeLeft / 30);
+            const comboBonus = G.combo * 25;
+            const feverMult = G.isFever ? 2 : 1;
+            const pts = (100 + timeBonus + comboBonus) * feverMult;
+            G.score += pts; G.fever = Math.min(G.fever + 15, 100);
+            flash('hit');
+            if (G.combo >= 10) popup('🌟 AMAZING!', 'perfect');
+            else if (G.combo >= 5) popup('🔥 PERFECT!', 'perfect');
+            else if (G.combo >= 3) popup('GREAT!', 'great');
+            else popup(`+${pts}`, 'nice');
+            if (G.combo === 5 || G.combo === 10 || G.combo === 20) setTimeout(() => popup(`${G.combo}コンボ!`, 'combo'), 200);
+            updateHUD(); setTimeout(nextRound, 300);
+        }
+
+        // ===== 不正解 =====
+        function handleLose() {
+            hidePassButton();
+            G.lives--; G.combo = 0; G.fever = Math.max(G.fever - 30, 0); G.isFever = false;
+            document.getElementById('gameplay').classList.remove('fever-mode');
+            flash('miss'); popup('MISS...', 'miss'); updateHUD();
+            setTimeout(() => { if (G.lives <= 0) endGame(); else nextRound(); }, 500);
+        }
+
+        // ===== パス =====
+        function handlePass() {
+            if (G.passUsed >= G.maxPass) return;
+            stopTimer(); hidePassButton();
+            G.passUsed++; G.combo = 0; G.fever = Math.max(G.fever - 10, 0);
+            flash('pass'); popup('PASS', 'pass'); updateHUD();
+            setTimeout(nextRound, 300);
+        }
+
+        // ===== ポップアップ & フラッシュ =====
+        function popup(text, type) {
+            const p = document.createElement('div'); p.className = `popup ${type}`; p.textContent = text;
+            document.body.appendChild(p); setTimeout(() => p.remove(), 600);
+        }
+        function flash(type) {
+            const f = document.getElementById('flash'); f.className = 'flash ' + type;
+            setTimeout(() => f.className = 'flash', 200);
+        }
+
+        // ===== ゲーム終了 =====
+        function endGame() {
+            stopTimer(); hidePassButton();
+
+            const isCleared = G.round >= CLEAR_ROUND;
+            const isNewHighScore = G.score > highScore;
+
+            if (isNewHighScore) {
+                highScore = G.score;
+                localStorage.setItem('flagEndlessHighScore', highScore);
+                document.getElementById('best-score').textContent = highScore.toLocaleString();
+            }
+
+            // クリア時: localStorage に保存
+            if (isCleared) {
+                localStorage.setItem('gameClear_' + GAME_NUMBER, 'true');
+            }
+
+            const result = document.getElementById('result');
+            result.className = isCleared ? 'screen clear-bg' : 'screen lose-bg';
+
+            if (isCleared) {
+                // ===== クリア画面 =====
+                document.getElementById('result-content').innerHTML = `
+                    ${isNewHighScore ? '<div class="highscore-badge">🎉 NEW HIGH SCORE!</div>' : ''}
+                    <div class="result-icon-container">
+                        <div class="icon-ring"></div>
+                        <div class="result-icon">🏆</div>
+                    </div>
+                    <div class="result-title clear-title">🎉 STAGE CLEAR!</div>
+                    <div class="result-score-box">
+                        <div class="result-score-label">Total Score</div>
+                        <div class="result-score-value" id="score-counter">0</div>
+                    </div>
+                    <div class="result-stats">
+                        <div class="stat-row">
+                            <span>🎯 到達ラウンド</span>
+                            <span class="stat-value green">${G.round}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>🔥 最大コンボ</span>
+                            <span class="stat-value gold">${G.maxCombo}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>⏭ パス使用</span>
+                            <span class="stat-value gray">${G.passUsed} / ${G.maxPass}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>🏆 ハイスコア</span>
+                            <span class="stat-value pink">${highScore.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <div class="clear-hint">✨ ステージクリア！ヒント文字を獲得！ ✨</div>
+                    <div class="redirect-msg">まもなくメニューに戻ります...</div>
+                    <div class="result-buttons">
+                        <button class="btn btn-green" onclick="goBack()">🏠 メニューへ</button>
+                    </div>
+                `;
+                showScreen('result');
+                createConfetti();
+                createStars();
+
+                // 自動リダイレクト
+                setTimeout(goBack, 3500);
+
+            } else {
+                // ===== ゲームオーバー画面 =====
+                document.getElementById('result-content').innerHTML = `
+                    ${isNewHighScore ? '<div class="highscore-badge">🎉 NEW HIGH SCORE!</div>' : ''}
+                    <div class="result-icon-container">
+                        <div class="icon-ring"></div>
+                        <div class="result-icon">💀</div>
+                    </div>
+                    <div class="result-title over-title">GAME OVER</div>
+                    <div class="result-score-box">
+                        <div class="result-score-label">Total Score</div>
+                        <div class="result-score-value" id="score-counter">0</div>
+                    </div>
+                    <div class="result-stats">
+                        <div class="stat-row">
+                            <span>🎯 到達ラウンド</span>
+                            <span class="stat-value cyan">${G.round} / ${CLEAR_ROUND}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>🔥 最大コンボ</span>
+                            <span class="stat-value gold">${G.maxCombo}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>⏭ パス使用</span>
+                            <span class="stat-value gray">${G.passUsed} / ${G.maxPass}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>🏆 ハイスコア</span>
+                            <span class="stat-value pink">${highScore.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <div style="color:#ff8800; font-size:0.9em; margin-top:10px; animation: boxAppear 0.5s ease-out 0.9s both;">
+                        💡 ROUND ${CLEAR_ROUND} に到達するとクリア！
+                    </div>
+                    <div class="result-buttons">
+                        <button class="btn" onclick="startGame()">🔄 RETRY</button>
+                        <button class="btn btn-cyan btn-small" onclick="goBack()">🏠 メニューへ</button>
+                    </div>
+                `;
+                showScreen('result');
+                if (isNewHighScore) { createConfetti(); createStars(); }
+            }
+
+            // スコアカウントアップ
+            let current = 0;
+            const target = G.score;
+            const step = target / (1500 / 16);
+            const counter = document.getElementById('score-counter');
+            const countUp = setInterval(() => {
+                current += step;
+                if (current >= target) { current = target; clearInterval(countUp); }
+                counter.textContent = Math.floor(current).toLocaleString();
+            }, 16);
+        }
+
+        // ===== 国旗プリロード =====
+        countries.forEach(c => { const img = new Image(); img.src = flagUrl(c.code); });
+    </script>
+</body>
+</html>

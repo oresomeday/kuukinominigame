@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>くうきがない EX - エンドレスミニゲーム</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+        body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#0a0a1a;min-height:100vh;overflow:hidden;touch-action:manipulation}
+        .back-btn{position:fixed;top:15px;left:15px;background:linear-gradient(180deg,#6c0000,#8b0000);border:2px solid #ff3030;color:#fff;width:50px;height:50px;border-radius:50%;font-size:1.5rem;cursor:pointer;z-index:9999;box-shadow:0 4px 15px rgba(139,0,0,0.5);display:flex;align-items:center;justify-content:center;transition:all .2s}
+        .back-btn:active{transform:scale(.9)}
+        #game{width:100vw;height:100vh;max-width:500px;margin:0 auto;position:relative;overflow:hidden}
+        .screen{display:none;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;padding:15px;position:absolute;top:0;left:0}
+        .screen.active{display:flex}
+        #title{background:#000;position:relative;overflow:hidden}
+        .bg-effects{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none}
+        .cyber-grid{position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(0,255,200,0.03) 1px,transparent 1px),linear-gradient(rgba(0,255,200,0.03) 1px,transparent 1px);background-size:30px 30px;animation:gridMove 20s linear infinite}
+        @keyframes gridMove{0%{background-position:0 0}100%{background-position:30px 30px}}
+        .aurora{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 20% 20%,rgba(0,200,150,0.4) 0%,transparent 50%),radial-gradient(ellipse at 80% 30%,rgba(0,100,255,0.3) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(100,0,200,0.3) 0%,transparent 50%);animation:auroraShift 8s ease-in-out infinite}
+        @keyframes auroraShift{0%,100%{opacity:.8}50%{opacity:1}}
+        .particles{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden}
+        .particle{position:absolute;border-radius:50%;animation:floatUp 10s infinite;opacity:0}
+        @keyframes floatUp{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-100vh) scale(1);opacity:0}}
+        .scanlines{position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent 0px,transparent 2px,rgba(0,0,0,0.1) 2px,rgba(0,0,0,0.1) 4px)}
+        .title-content{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;padding:20px}
+        .title-logo{text-align:center;margin-bottom:auto;padding-top:12vh}
+        .title-icon{font-size:4em;display:block;margin-bottom:15px;animation:iconFloat 3s ease-in-out infinite,iconGlow 2s ease-in-out infinite alternate}
+        @keyframes iconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+        @keyframes iconGlow{from{filter:drop-shadow(0 0 30px rgba(0,200,150,0.8))}to{filter:drop-shadow(0 0 50px rgba(100,0,255,0.8))}}
+        .title-text{font-size:2em;font-weight:900;letter-spacing:.15em;color:#fff;text-shadow:0 0 10px #fff,0 0 20px #fff,0 0 40px #00cc88,0 0 80px #00cc88;animation:textPulse 2s ease-in-out infinite}
+        @keyframes textPulse{0%,100%{text-shadow:0 0 10px #fff,0 0 20px #fff,0 0 40px #00cc88,0 0 80px #00cc88}50%{text-shadow:0 0 20px #fff,0 0 40px #fff,0 0 60px #6600ff,0 0 100px #6600ff}}
+        .title-sub{font-size:.85em;color:#88ffcc;letter-spacing:.5em;margin-top:10px;text-shadow:0 0 20px #00cc88}
+        .title-desc{color:#aaa;font-size:.85em;margin-top:15px;text-align:center;line-height:1.6}
+        .title-desc span{color:#ff6688;font-weight:bold}
+        .title-clear-info{color:#4ecdc4;font-size:.8em;margin-top:10px;padding:8px 16px;background:rgba(78,205,196,0.1);border:1px solid rgba(78,205,196,0.3);border-radius:20px}
+        .start-btn-wrap{display:flex;align-items:center;justify-content:center}
+        .start-btn{position:relative;background:transparent;border:none;padding:22px 70px;font-size:1.6em;font-weight:bold;color:#fff;cursor:pointer;text-transform:uppercase;letter-spacing:.1em;overflow:hidden;transition:all .3s}
+        .start-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(45deg,#00cc88,#0066ff,#6600ff,#00cc88);background-size:400% 400%;animation:gradientShift 3s ease infinite;border-radius:50px;z-index:-2}
+        @keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        .start-btn::after{content:'';position:absolute;inset:3px;background:rgba(0,0,0,.85);border-radius:47px;z-index:-1;transition:background .3s}
+        .start-btn:hover::after,.start-btn:active::after{background:rgba(0,0,0,.6)}
+        .start-btn span{position:relative;z-index:1;text-shadow:0 0 20px #fff}
+        .start-btn:active{transform:scale(.95)}
+        .deco-container{display:flex;align-items:center;gap:20px;margin-top:auto;padding-bottom:10vh}
+        .deco-line{width:80px;height:2px;background:linear-gradient(90deg,transparent,#00cc88,#6600ff,transparent);animation:lineGlow 2s infinite}
+        @keyframes lineGlow{0%,100%{opacity:.5}50%{opacity:1}}
+        .deco-diamond{width:12px;height:12px;background:linear-gradient(45deg,#00cc88,#6600ff);transform:rotate(45deg);animation:diamondSpin 4s linear infinite;box-shadow:0 0 15px #00cc88}
+        @keyframes diamondSpin{from{transform:rotate(45deg)}to{transform:rotate(405deg)}}
+        .hud{position:absolute;top:0;left:0;right:0;padding:8px 12px;padding-left:70px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(0,0,0,.9) 0%,transparent 100%);z-index:10}
+        .hud-item{display:flex;align-items:center;gap:5px;color:#fff;font-weight:bold}
+        .lives{font-size:1.2em}
+        .fever-gauge{width:80px;height:12px;background:#333;border-radius:6px;overflow:hidden;border:2px solid #666}
+        .fever-fill{height:100%;background:linear-gradient(90deg,#00cc88,#0088ff,#6600ff);background-size:200% 100%;animation:feverGrad 1s linear infinite;transition:width .3s}
+        @keyframes feverGrad{0%{background-position:0% 0%}100%{background-position:200% 0%}}
+        .score{color:#00ccbb;font-size:1.1em;text-shadow:0 0 10px #00ccbb}
+        .combo-display{position:absolute;top:45px;right:15px;color:#ffff00;font-size:1.2em;font-weight:bold;text-shadow:0 0 15px #ffff00}
+        .round-display{position:absolute;top:45px;left:70px;color:#00ff88;font-size:1em;font-weight:bold;text-shadow:0 0 10px #00ff88}
+        .pass-display{position:absolute;top:70px;left:70px;color:#888;font-size:.9em;font-weight:bold}
+        .mini-type{position:absolute;top:70px;right:15px;color:#88ffcc;font-size:.8em;font-weight:bold;text-shadow:0 0 10px #88ffcc}
+        .clear-goal{position:absolute;top:95px;left:70px;color:#4ecdc4;font-size:.75em;font-weight:bold;text-shadow:0 0 8px #4ecdc4}
+        .timer-wrap{position:absolute;top:40px;left:0;right:0;height:8px;background:rgba(255,255,255,.1)}
+        .timer-bar{height:100%;background:linear-gradient(90deg,#00ff88,#00ccbb);transition:width .05s linear;box-shadow:0 0 10px currentColor}
+        .timer-bar.warn{background:linear-gradient(90deg,#ffcc00,#ff9900)}
+        .timer-bar.danger{background:linear-gradient(90deg,#ff0044,#ff0088);animation:timerPulse .2s infinite}
+        @keyframes timerPulse{0%,100%{opacity:1}50%{opacity:.6}}
+        #gameplay{background:linear-gradient(180deg,#0a1a2e 0%,#0a2a1e 100%)}
+        .game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding-top:55px;position:relative}
+        .fever-mode .game-area{animation:feverBg .3s infinite alternate}
+        @keyframes feverBg{from{background:rgba(0,200,150,.12)}to{background:rgba(100,0,255,.12)}}
+        .round-splash{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3em;font-weight:900;color:#fff;text-shadow:0 0 20px #fff,0 0 40px #00ccbb,0 0 60px #00ccbb;z-index:100;animation:splashAnim .6s forwards;text-align:center;white-space:nowrap}
+        @keyframes splashAnim{0%{opacity:0;transform:translate(-50%,-50%) scale(3) rotate(-10deg)}40%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}100%{opacity:0;transform:translate(-50%,-50%) scale(.5)}}
+        .popup{position:fixed;top:45%;left:50%;transform:translate(-50%,-50%);font-size:2.5em;font-weight:bold;pointer-events:none;z-index:1000;animation:popAnim .5s forwards}
+        @keyframes popAnim{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-80%) scale(1)}}
+        .popup.nice{color:#00ff88;text-shadow:0 0 30px #00ff88}
+        .popup.great{color:#00ccff;text-shadow:0 0 30px #00ccff}
+        .popup.perfect{color:#cc00ff;text-shadow:0 0 30px #cc00ff}
+        .popup.miss{color:#ff0044;text-shadow:0 0 30px #ff0044}
+        .popup.pass{color:#888;text-shadow:0 0 30px #888}
+        .popup.fever{color:#fff;text-shadow:0 0 30px #00cc88,0 0 60px #6600ff;font-size:3em}
+        .flash{position:fixed;inset:0;pointer-events:none;z-index:999}
+        .flash.hit{animation:flashGreen .15s}
+        .flash.miss{animation:flashRed .15s}
+        .flash.pass{animation:flashGray .15s}
+        @keyframes flashGreen{from{background:rgba(0,255,100,.4)}to{background:transparent}}
+        @keyframes flashRed{from{background:rgba(255,0,50,.4)}to{background:transparent}}
+        @keyframes flashGray{from{background:rgba(128,128,128,.3)}to{background:transparent}}
+        .game-btn{padding:18px 40px;margin:8px;font-size:1.3em;font-weight:bold;border:none;border-radius:15px;cursor:pointer;transition:all .2s;text-shadow:0 2px 4px rgba(0,0,0,.3)}
+        .game-btn:active{transform:scale(.95)}
+        .game-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+        .btn-correct{background:linear-gradient(145deg,#00cc66,#009944);color:white;box-shadow:0 5px 20px rgba(0,200,100,.4)}
+        .btn-wrong{background:linear-gradient(145deg,#ff4466,#cc2244);color:white;box-shadow:0 5px 20px rgba(255,50,100,.4)}
+        .btn-pass{background:linear-gradient(145deg,#666,#444);color:#ddd;box-shadow:0 5px 20px rgba(100,100,100,.4);padding:12px 30px;font-size:1em}
+        .btn-pass:disabled{background:linear-gradient(145deg,#333,#222);color:#555;box-shadow:none}
+        .button-container{display:flex;flex-wrap:wrap;justify-content:center;margin-top:20px}
+        .pass-container{margin-top:25px;text-align:center}
+        .pass-remaining{color:#888;font-size:.9em;margin-top:8px}
+        .question-text{color:#ccc;font-size:1.1em;text-align:center;margin-bottom:15px;line-height:1.5}
+        .question-text em{color:#ffcc00;font-style:normal;font-weight:bold}
+        .question-text .highlight{color:#00ccbb;font-weight:bold;font-size:1.3em}
+        .mini-label{color:#88ffcc;font-size:.85em;font-weight:bold;margin-bottom:8px;letter-spacing:.2em}
+        .quiz-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:320px;width:100%;margin-top:15px}
+        .quiz-choice{padding:15px 10px;font-size:1.2em;font-weight:bold;border:2px solid #444;border-radius:12px;background:linear-gradient(145deg,#2a2a5a,#1a1a3a);color:#fff;cursor:pointer;transition:all .15s;text-align:center}
+        .quiz-choice:active{transform:scale(.95)}
+        .quiz-choice.correct-answer{border-color:#00ff88;background:linear-gradient(145deg,#003322,#002211)}
+        .quiz-choice.wrong-answer{border-color:#ff0044;background:linear-gradient(145deg,#330011,#220011)}
+        .count-area{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;max-width:340px;margin:12px 0}
+        .count-char{width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:1.3em;font-weight:900;color:#fff;background:linear-gradient(145deg,#2a2a5a,#1a1a3a);border:2px solid #444;border-radius:8px}
+        .count-choices{display:flex;gap:10px;margin-top:15px}
+        .count-choice{width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:1.5em;font-weight:bold;border:2px solid #444;border-radius:12px;background:linear-gradient(145deg,#2a2a5a,#1a1a3a);color:#fff;cursor:pointer;transition:all .15s}
+        .count-choice:active{transform:scale(.9)}
+
+        /* ===== 新ミニゲーム固有CSS ===== */
+        .rhythm-area{position:relative;width:100%;height:100px;background:rgba(0,0,0,.3);border-radius:15px;overflow:hidden;cursor:pointer;margin:15px 0}
+        .rhythm-zone{position:absolute;left:15%;top:0;width:20%;height:100%;background:rgba(0,255,136,.12);border-left:3px solid rgba(0,255,136,.6);border-right:3px solid rgba(0,255,136,.6)}
+        .rhythm-note{position:absolute;top:50%;transform:translateY(-50%);font-size:2.5em;font-weight:900;color:#fff;text-shadow:0 0 20px #00ccff}
+
+        .bounce-area{position:relative;width:100%;height:260px;background:rgba(0,0,0,.2);border-radius:15px;overflow:hidden;margin:10px 0}
+        .bounce-char{position:absolute;font-size:1.8em;font-weight:900;cursor:pointer;color:#fff;text-shadow:0 0 10px rgba(255,255,255,.5);width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.08)}
+        .bounce-char:active{transform:scale(.8)!important}
+
+        @keyframes spinChar{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+        .ice-block{width:130px;height:130px;margin:15px auto;background:linear-gradient(145deg,rgba(130,210,255,.7),rgba(80,180,255,.3));border:3px solid rgba(160,230,255,.5);border-radius:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:all .1s}
+        .ice-block:active{transform:scale(.95)}
+        .ice-overlay{position:absolute;inset:0;background:linear-gradient(145deg,rgba(200,240,255,.9),rgba(130,210,255,.5));transition:opacity .3s;border-radius:17px}
+        .ice-char{position:relative;z-index:1;font-size:3em;font-weight:900;color:rgba(255,255,255,.15);transition:color .3s,text-shadow .3s}
+        .ice-block.melted .ice-overlay{opacity:0}
+        .ice-block.melted .ice-char{color:#fff;text-shadow:0 0 20px #00ccff}
+
+        .card-grid-sm{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:250px;margin:15px auto}
+        .match-card{aspect-ratio:.75;display:flex;align-items:center;justify-content:center;font-size:1.8em;font-weight:900;border-radius:12px;cursor:pointer;transition:all .3s;border:2px solid #444;background:linear-gradient(145deg,#3a3a6a,#2a2a5a);color:#fff}
+        .match-card.face-down{color:transparent}
+        .match-card.face-down::after{content:'?';color:#555;font-size:.8em;position:absolute}
+        .match-card.face-up{border-color:#00ccff;background:linear-gradient(145deg,#1a2a5a,#0a1a3a)}
+        .match-card.matched{border-color:#00ff88;background:linear-gradient(145deg,#003322,#002211);color:#00ff88}
+
+        .dice-box{width:100px;height:100px;background:linear-gradient(145deg,#fff,#ddd);border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:3em;margin:20px auto;color:#333;box-shadow:0 5px 20px rgba(0,0,0,.3);animation:diceRoll .5s ease-out}
+        @keyframes diceRoll{0%{transform:rotate(0) scale(.5)}50%{transform:rotate(360deg) scale(1.1)}100%{transform:rotate(720deg) scale(1)}}
+
+        .wave-char-item{width:48px;height:56px;display:flex;align-items:center;justify-content:center;font-size:1.8em;font-weight:900;color:#fff;background:linear-gradient(145deg,#2a2a5a,#1a1a3a);border:2px solid #444;border-radius:10px;cursor:pointer;transition:all .15s}
+        .wave-char-item:active{transform:scale(.9)}
+
+        .rapid-pair{display:flex;gap:20px;margin:20px 0;justify-content:center}
+        .rapid-option{width:120px;height:120px;display:flex;align-items:center;justify-content:center;font-size:3em;font-weight:900;color:#fff;background:linear-gradient(145deg,#2a2a5a,#1a1a3a);border:3px solid #444;border-radius:20px;cursor:pointer;transition:all .15s}
+        .rapid-option:active{transform:scale(.9)}
+
+        .pyramid-slot{width:46px;height:52px;display:flex;align-items:center;justify-content:center;font-size:1.5em;font-weight:900;color:#444;background:rgba(255,255,255,.05);border:2px dashed #333;border-radius:8px}
+        .pyramid-slot.filled{color:#00ff88;background:linear-gradient(145deg,#003322,#002211);border:2px solid #00ff88}
+        .pyramid-slot.current{border-color:#ffff00;border-style:solid}
+        .pyramid-choices{display:flex;gap:10px;margin-top:15px;justify-content:center}
+
+        /* 結果画面 */
+        #result{position:relative;overflow:hidden}
+        #result.lose-bg{background:radial-gradient(ellipse at center,#1a1a3a 0%,#0a0a1a 100%)}
+        #result.clear-bg{background:radial-gradient(ellipse at center,#0a2a2a 0%,#0a1a2a 100%)}
+        .result-aurora{position:absolute;top:0;left:0;right:0;bottom:0;animation:loseAurora 3s ease-in-out infinite alternate}
+        .result-aurora.lose-aurora{background:radial-gradient(ellipse at 30% 30%,rgba(100,0,200,.2) 0%,transparent 50%),radial-gradient(ellipse at 70% 70%,rgba(0,150,255,.2) 0%,transparent 50%)}
+        .result-aurora.clear-aurora{background:radial-gradient(ellipse at 30% 30%,rgba(0,200,150,.3) 0%,transparent 50%),radial-gradient(ellipse at 70% 70%,rgba(0,200,255,.3) 0%,transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(255,215,0,.2) 0%,transparent 50%)}
+        @keyframes loseAurora{from{opacity:.5}to{opacity:1}}
+        .confetti-container{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;pointer-events:none;z-index:1}
+        .confetti{position:absolute;top:-20px;animation:confettiFall linear infinite}
+        @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(1080deg);opacity:.8}}
+        .stars-container{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+        .star{position:absolute;font-size:1.5em;animation:starTwinkle 1s ease-out forwards}
+        @keyframes starTwinkle{0%{transform:scale(0) rotate(0);opacity:1}50%{transform:scale(1.5) rotate(180deg)}100%{transform:scale(0) rotate(360deg);opacity:0}}
+        .result-content{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center}
+        .result-icon-container{position:relative;margin-bottom:20px}
+        .result-icon{font-size:5em;animation:iconEntry .8s cubic-bezier(.68,-.55,.265,1.55);filter:drop-shadow(0 0 30px currentColor)}
+        @keyframes iconEntry{0%{transform:scale(0) rotate(-180deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+        .icon-ring{position:absolute;top:50%;left:50%;width:150px;height:150px;border:3px solid rgba(0,200,200,.3);border-radius:50%;transform:translate(-50%,-50%);animation:ringExpand 1.5s ease-out infinite}
+        .icon-ring.clear-ring{border-color:rgba(78,205,196,.4)}
+        @keyframes ringExpand{0%{width:100px;height:100px;opacity:1}100%{width:250px;height:250px;opacity:0}}
+        .result-title{font-size:2.2em;font-weight:900;text-transform:uppercase;letter-spacing:.1em;margin-bottom:15px}
+        .result-title.title-lose{color:#ff6688;text-shadow:0 0 20px #ff0044}
+        .result-title.title-clear{color:#4ecdc4;text-shadow:0 0 20px #4ecdc4,0 0 40px #4ecdc4}
+        .result-score-box{background:linear-gradient(135deg,rgba(0,0,0,.6),rgba(30,30,60,.6));border:2px solid rgba(0,200,200,.3);border-radius:20px;padding:20px 50px;margin:15px 0;text-align:center;backdrop-filter:blur(10px);box-shadow:0 0 30px rgba(0,200,200,.2);animation:boxAppear .5s ease-out .3s both}
+        @keyframes boxAppear{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+        .result-score-label{color:#888;font-size:.9em;text-transform:uppercase;letter-spacing:.3em;margin-bottom:8px}
+        .result-score-value{font-size:3em;font-weight:900;color:#00ccbb;text-shadow:0 0 30px #00ccbb;font-family:'Courier New',monospace}
+        .result-stats{background:rgba(0,0,0,.4);border-radius:15px;padding:15px 25px;margin:10px 0;border:1px solid rgba(255,255,255,.1);animation:boxAppear .5s ease-out .5s both}
+        .stat-row{display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:1em;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.1);gap:30px}
+        .stat-row:last-child{border-bottom:none}
+        .stat-value{font-weight:bold;text-shadow:0 0 10px currentColor}
+        .stat-value.cyan{color:#00ccbb}.stat-value.gold{color:#ffd700}.stat-value.pink{color:#cc00ff}.stat-value.gray{color:#888}.stat-value.green{color:#4ecdc4}
+        .result-buttons{display:flex;flex-direction:column;gap:10px;margin-top:20px;animation:boxAppear .5s ease-out .7s both}
+        .btn{background:linear-gradient(145deg,#00aa88,#008866);color:white;border:none;padding:16px 45px;font-size:1.2em;font-weight:bold;border-radius:50px;cursor:pointer;box-shadow:0 5px 30px rgba(0,170,136,.5);transition:all .2s;position:relative;overflow:hidden;text-transform:uppercase;letter-spacing:.1em}
+        .btn::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,.3),transparent);transform:rotate(45deg);animation:btnShine 2s infinite}
+        @keyframes btnShine{0%{left:-50%}100%{left:150%}}
+        .btn:active{transform:scale(.95)}
+        .btn-cyan{background:linear-gradient(145deg,#0088cc,#006699);box-shadow:0 5px 30px rgba(0,150,220,.5)}
+        .btn-green{background:linear-gradient(145deg,#2cb5ac,#1a8a82);box-shadow:0 5px 30px rgba(78,205,196,.5)}
+        .btn-small{padding:12px 30px;font-size:1em}
+        .highscore-badge{background:linear-gradient(145deg,#ffd700,#ff8800);color:#000;padding:8px 20px;border-radius:30px;font-weight:bold;font-size:1.1em;margin-bottom:15px;animation:badgePop .5s ease-out 1s both;box-shadow:0 0 30px rgba(255,215,0,.5)}
+        @keyframes badgePop{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+        .clear-badge{background:linear-gradient(145deg,#4ecdc4,#2cb5ac);color:#fff;padding:10px 25px;border-radius:30px;font-weight:bold;font-size:1.1em;margin-bottom:15px;animation:badgePop .5s ease-out .5s both;box-shadow:0 0 30px rgba(78,205,196,.5)}
+        .redirect-msg{color:#4ecdc4;font-size:.85em;margin-top:15px;animation:blinkSlow 1.5s infinite}
+        @keyframes blinkSlow{0%,100%{opacity:1}50%{opacity:.4}}
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="goBack()">←</button>
+    <div id="game">
+        <div class="flash" id="flash"></div>
+        <div id="title" class="screen active">
+            <div class="bg-effects"><div class="cyber-grid"></div><div class="aurora"></div><div class="particles" id="particles"></div><div class="scanlines"></div></div>
+            <div class="title-content">
+                <div class="title-logo">
+                    <span class="title-icon">💨</span>
+                    <div class="title-text">くうきがない</div>
+                    <div class="title-sub">EX ・ 15 NEW GAMES</div>
+                    <div class="title-desc">「<span>くうきがない</span>」にまつわる<br>新作15種ミニゲームに挑戦！</div>
+                    <div class="title-clear-info">🎯 ROUND 15 到達でクリア！</div>
+                </div>
+                <div class="start-btn-wrap"><button class="start-btn" onclick="startGame()"><span>▶ START</span></button></div>
+                <div style="color:#00ccbb;font-size:1.2em;text-shadow:0 0 15px #00ccbb;">🏆 BEST: <span id="best-score">0</span></div>
+                <div class="deco-container"><div class="deco-line"></div><div class="deco-diamond"></div><div class="deco-line"></div></div>
+            </div>
+        </div>
+        <div id="gameplay" class="screen">
+            <div class="hud">
+                <div class="hud-item"><span class="lives" id="lives">❤️❤️❤️</span></div>
+                <div class="hud-item"><span style="font-size:.8em">🔥</span><div class="fever-gauge"><div class="fever-fill" id="fever-fill" style="width:0%"></div></div></div>
+                <div class="hud-item"><span class="score" id="score">0</span></div>
+            </div>
+            <div class="round-display" id="round-display">ROUND 1</div>
+            <div class="pass-display" id="pass-display">⏭ <span id="pass-icons">⚪⚪⚪</span></div>
+            <div class="clear-goal" id="clear-goal">🎯 クリアまで: あと15</div>
+            <div class="mini-type" id="mini-type"></div>
+            <div class="combo-display" id="combo"></div>
+            <div class="timer-wrap"><div class="timer-bar" id="timer"></div></div>
+            <div class="game-area" id="area"></div>
+        </div>
+        <div id="result" class="screen">
+            <div class="result-aurora" id="result-aurora"></div>
+            <div class="confetti-container" id="confetti"></div>
+            <div class="stars-container" id="stars"></div>
+            <div class="result-content" id="result-content"></div>
+        </div>
+    </div>
+<script>
+const GAME_NUMBER = 3;
+const CLEAR_ROUND = 15;
+let highScore = parseInt(localStorage.getItem('kuukiEXHighScore'))||0;
+document.getElementById('best-score').textContent = highScore.toLocaleString();
+function goBack(){window.location.href='index.html?menu=1'}
+
+!function(){const c=document.getElementById('particles');for(let i=0;i<30;i++){const p=document.createElement('div');p.className='particle';p.style.left=Math.random()*100+'%';p.style.animationDelay=Math.random()*10+'s';p.style.animationDuration=(8+Math.random()*8)+'s';const s=2+Math.random()*5;p.style.width=s+'px';p.style.height=s+'px';const cols=['#00cc88','#00ccff','#6600ff','#cc00ff','#00ff88'];const col=cols[Math.floor(Math.random()*cols.length)];p.style.background=col;p.style.boxShadow=`0 0 ${s*3}px ${col}`;c.appendChild(p)}}();
+
+function createConfetti(){const c=document.getElementById('confetti');c.innerHTML='';const sh=['■','●','▲','★','◆'],co=['#4ecdc4','#00ccff','#ffff00','#ffd700','#00ff88','#00cc88'];for(let i=0;i<80;i++){const d=document.createElement('div');d.className='confetti';d.textContent=sh[Math.floor(Math.random()*sh.length)];d.style.left=Math.random()*100+'%';d.style.color=co[Math.floor(Math.random()*co.length)];d.style.fontSize=(10+Math.random()*12)+'px';d.style.animationDuration=(2+Math.random()*3)+'s';d.style.animationDelay=Math.random()*2+'s';d.style.textShadow=`0 0 10px ${d.style.color}`;c.appendChild(d)}}
+function createStars(){const c=document.getElementById('stars');c.innerHTML='';for(let i=0;i<20;i++){setTimeout(()=>{const s=document.createElement('div');s.className='star';s.textContent='✦';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.color=['#ffd700','#fff','#4ecdc4'][Math.floor(Math.random()*3)];c.appendChild(s);setTimeout(()=>s.remove(),1000)},i*200)}}
+
+let G={round:0,lives:3,score:0,combo:0,maxCombo:0,fever:0,isFever:false,timer:null,timeLeft:0,baseTime:6000,passUsed:0,maxPass:3,answered:false,miniType:'',fallIntervals:[],lastMiniIdx:-1};
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.getElementById('gameplay').classList.remove('fever-mode')}
+function render(h){document.getElementById('area').innerHTML=h}
+function showSplash(t,cb,d=500){render(`<div class="round-splash">${t}</div>`);setTimeout(cb,d)}
+function updateHUD(){
+    document.getElementById('lives').textContent='❤️'.repeat(G.lives)+'🖤'.repeat(3-G.lives);
+    document.getElementById('score').textContent=G.score.toLocaleString();
+    document.getElementById('combo').textContent=G.combo>1?`${G.combo}コンボ!`:'';
+    document.getElementById('fever-fill').style.width=`${Math.min(G.fever,100)}%`;
+    document.getElementById('round-display').textContent=`ROUND ${G.round}`;
+    document.getElementById('pass-icons').textContent='⚪'.repeat(G.maxPass-G.passUsed)+'⚫'.repeat(G.passUsed);
+    document.getElementById('mini-type').textContent=G.miniType;
+    const r=Math.max(0,CLEAR_ROUND-G.round);
+    const g=document.getElementById('clear-goal');
+    g.textContent=G.round>=CLEAR_ROUND?'✅ クリア条件達成！':`🎯 クリアまで: あと${r+1}`;
+    if(G.round>=CLEAR_ROUND)g.style.color='#ffd700';
+}
+function getTimeForRound(){return Math.max(2500,G.baseTime-(G.round-1)*80)}
+function startTimer(time,onTimeout){
+    clearInterval(G.timer);G.timeLeft=time;
+    const bar=document.getElementById('timer');bar.style.width='100%';bar.className='timer-bar';
+    G.timer=setInterval(()=>{G.timeLeft-=30;const p=G.timeLeft/time*100;bar.style.width=p+'%';if(p<25)bar.className='timer-bar danger';else if(p<50)bar.className='timer-bar warn';if(G.timeLeft<=0){clearInterval(G.timer);if(onTimeout)onTimeout()}},30);
+}
+function stopTimer(){clearInterval(G.timer)}
+function clearFI(){G.fallIntervals.forEach(id=>{clearInterval(id);clearTimeout(id)});G.fallIntervals=[]}
+
+function startGame(){
+    G.round=0;G.lives=3;G.score=0;G.combo=0;G.maxCombo=0;G.fever=0;G.isFever=false;G.passUsed=0;G.answered=false;G.miniType='';G.lastMiniIdx=-1;
+    showScreen('gameplay');showSplash('💨 READY',()=>showSplash('GO!',nextRound,300),400);
+}
+function nextRound(){
+    if(G.lives<=0)return endGame();
+    G.round++;G.answered=false;clearFI();updateHUD();
+    if(G.fever>=100&&!G.isFever){G.isFever=true;document.getElementById('gameplay').classList.add('fever-mode');popup('🔥 FEVER! 🔥','fever')}
+    if(G.round===CLEAR_ROUND)showSplash('🎯 CLEAR達成!',playRound,600);
+    else if(G.round%10===1&&G.round>1)showSplash(`🔥 ROUND ${G.round}!`,playRound,500);
+    else playRound();
+}
+function handleCorrect(){
+    if(G.answered)return;G.answered=true;stopTimer();clearFI();
+    G.combo++;if(G.combo>G.maxCombo)G.maxCombo=G.combo;
+    const m=G.isFever?2:1,pts=(100+G.combo*25)*m;G.score+=pts;G.fever=Math.min(G.fever+15,100);
+    flash('hit');
+    if(G.combo>=10)popup('🌟 AMAZING!','perfect');else if(G.combo>=5)popup('🔥 PERFECT!','perfect');else if(G.combo>=3)popup('GREAT!','great');else popup(`+${pts}`,'nice');
+    updateHUD();setTimeout(nextRound,400);
+}
+function handleWrong(){
+    if(G.answered)return;G.answered=true;stopTimer();clearFI();
+    G.lives--;G.combo=0;G.fever=Math.max(G.fever-30,0);G.isFever=false;
+    document.getElementById('gameplay').classList.remove('fever-mode');
+    flash('miss');popup('MISS...','miss');updateHUD();
+    setTimeout(()=>{if(G.lives<=0)endGame();else nextRound()},500);
+}
+function handlePass(){
+    if(G.answered||G.passUsed>=G.maxPass)return;
+    G.answered=true;stopTimer();clearFI();G.passUsed++;G.combo=0;G.fever=Math.max(G.fever-10,0);
+    flash('pass');popup('PASS','pass');updateHUD();setTimeout(nextRound,300);
+}
+function popup(t,ty){const p=document.createElement('div');p.className=`popup ${ty}`;p.textContent=t;document.body.appendChild(p);setTimeout(()=>p.remove(),600)}
+function flash(ty){const f=document.getElementById('flash');f.className='flash '+ty;setTimeout(()=>f.className='flash',200)}
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function passHTML(){const r=G.maxPass-G.passUsed;return`<div class="pass-container"><button class="game-btn btn-pass" onclick="handlePass()" ${r<=0?'disabled':''}>⏭ パス</button><div class="pass-remaining">残り ${r} 回</div></div>`}
+
+const T='くうきがない',TC=['く','う','き','が','な','い'];
+const DC=['け','お','か','ぎ','ぬ','え','こ','あ','さ','し','す','せ','そ','た','ち','つ','て','と','に','の','は','ひ','ふ','へ','ほ','ま','み','む','め','も','や','ゆ','よ','ら','り','る','れ','ろ','わ','を','ん','ご','ぐ','げ','ざ','ず','ぜ','ぞ','だ','で','ど'];
+
+// ===== 1. リズムタップ =====
+function mg_rhythm(){
+    G.miniType='🎵 リズムタップ';updateHUD();
+    const tc=pick(TC);let pos=105;
+    render(`<div class="mini-label">🎵 リズムタップ</div><div class="question-text">「<span class="highlight">${tc}</span>」がゾーンに来たらタップ！<br><small style="color:#666">「くうきがない」のリズムを感じろ！</small></div><div class="rhythm-area" onclick="rhythmHit()"><div class="rhythm-zone"></div><div class="rhythm-note" id="rnote" style="left:105%">${tc}</div></div>${passHTML()}`);
+    const note=document.getElementById('rnote');
+    const spd=.35+Math.min(G.round*.025,.5);
+    const mv=setInterval(()=>{if(G.answered)return;pos-=spd;note.style.left=pos+'%';if(pos<-15){clearInterval(mv);if(!G.answered)handleWrong()}},16);
+    G.fallIntervals.push(mv);
+    window.rhythmHit=function(){if(G.answered)return;(pos>=12&&pos<=38)?handleCorrect():handleWrong()};
+    startTimer(getTimeForRound()+3000,()=>handleWrong());
+}
+
+// ===== 2. 文字足し算 =====
+function mg_charMath(){
+    G.miniType='🧮 文字足し算';updateHUD();
+    const i1=Math.floor(Math.random()*6);let i2;do{i2=Math.floor(Math.random()*6)}while(i2===i1);
+    const correct=TC[i1]+TC[i2];
+    const wrongs=[];while(wrongs.length<3){const w=pick([...TC,...DC.slice(0,4)])+pick([...TC,...DC.slice(0,4)]);if(w!==correct&&!wrongs.includes(w))wrongs.push(w)}
+    const choices=shuffle([correct,...wrongs]);
+    window.mathAns=function(a){if(G.answered)return;a===correct?handleCorrect():handleWrong()};
+    render(`<div class="mini-label">🧮 文字足し算</div><div class="question-text">「<em>くうきがない</em>」の<br><span class="highlight">${i1+1}文字目</span> ＋ <span class="highlight">${i2+1}文字目</span> ＝ ？</div><div class="quiz-choices">${choices.map(c=>`<button class="quiz-choice" onclick="mathAns('${c}')">${c}</button>`).join('')}</div>${passHTML()}`);
+    startTimer(getTimeForRound(),()=>handleWrong());
+}
+
+// ===== 3. アナグラム判定 =====
+function mg_anagram(){
+    G.miniType='🔀 アナグラム';updateHUD();
+    const isReal=Math.random()<.5;
+    let chars;
+    if(isReal){chars=shuffle([...TC])}
+    else{chars=[...TC];const n=1+Math.floor(Math.random()*2);for(let i=0;i<n;i++){const idx=Math.floor(Math.random()*6);chars[idx]=pick(DC.filter(c=>!chars.includes(c)))}chars=shuffle(chars)}
+    window.anaAns=function(a){if(G.answered)return;a===isReal?handleCorrect():handleWrong()};
+    render(`<div class="mini-label">🔀 アナグラム</div><div class="question-text">これは「<em>くうきがない</em>」の<br>並べ替え？</div><div style="display:flex;gap:5px;margin:20px 0;justify-content:center">${chars.map(c=>`<div style="width:48px;height:56px;display:flex;align-items:center;justify-content:center;font-size:1.8em;font-weight:900;color:#fff;background:linear-gradient(145deg,#2a2a5a,#1a1a3a);border:2px solid #555;border-radius:10px">${c}</div>`).join('')}</div><div class="button-container"><button class="game-btn btn-correct" onclick="anaAns(true)" style="font-size:1.5em;padding:18px 45px">⭕ YES</button><button class="game-btn btn-wrong" onclick="anaAns(false)" style="font-size:1.5em;padding:18px 45px">✖ NO</button></div>${passHTML()}`);
+    startTimer(getTimeForRound(),()=>handleWrong());
+}
+
+// ===== 4. 追跡タップ =====
+function mg_chase(){
+    G.miniType='🎯 追跡タップ';updateHUD();
+    const tc=pick(TC);const n=4+Math.min(Math.floor(G.round/5),4);
+    let chars=[];chars.push({ch:tc,isT:true,x:10+Math.random()*70,y:10+Math.random()*70,vx:(Math.random()-.5)*2.5,vy:(Math.random()-.5)*2.5,id:0});
+    for(let i=1;i<n;i++)chars.push({ch:pick(DC.filter(c=>c!==tc)),isT:false,x:10+Math.random()*70,y:10+Math.random()*70,vx:(Math.random()-.5)*2.5,vy:(Math.random()-.5)*2.5,id:i});
+    chars=shuffle(chars);
+    window.chaseTap=function(id){if(G.answered)return;chars.find(c=>c.id===id).isT?handleCorrect():handleWrong()};
+    render(`<div class="mini-label">🎯 追跡タップ</div><div class="question-text">動く「<span class="highlight">${tc}</span>」をタップ！</div><div class="bounce-area" id="chase-area">${chars.map(c=>`<div class="bounce-char" id="bc-${c.id}" onclick="chaseTap(${c.id})" style="left:${c.x}%;top:${c.y}%">${c.ch}</div>`).join('')}</div>${passHTML()}`);
+    const mv=setInterval(()=>{if(G.answered)return;chars.forEach(c=>{c.x+=c.vx;c.y+=c.vy;if(c.x<2||c.x>85)c.vx*=-1;if(c.y<2||c.y>85)c.vy*=-1;c.x=Math.max(2,Math.min(85,c.x));c.y=Math.max(2,Math.min(85,c.y));const el=document.getElementById('bc-'+c.id);if(el){el.style.left=c.x+'%';el.style.top=c.y+'%'}})},30);
+    G.fallIntervals.push(mv);startTimer(getTimeForRound()+2000,()=>handleWrong());
+}
+
+// ===== 5. 回転文字 =====
+function mg_spin(){
+    G.miniType='🌀 回転文字';updateHUD();
+    const correct=pick(TC);const decs=shuffle(DC.filter(c=>c!==correct)).slice(0,3);const choices=shuffle([correct,...decs]);
+    const spd=Math.max(.3,1.5-G.round*.05);
+    window.spinAns=function(ch){if(G.answered)return;ch===correct?handleCorrect():handleWrong()};
+    render(`<div class="mini-label">🌀 回転文字</div><div class="question-text">回転する「<em>くうきがない</em>」の文字は？</div><div style="margin:20px 0"><span style="display:inline-block;animation:spinChar ${spd}s linear infinite;font-size:5em;font-weight:900;color:#fff;text-shadow:0 0 30px #6600ff">${correct}</span></div><div class="quiz-choices">${choices.map(c=>`<button class="quiz-choice" onclick="spinAns('${c}')">${c}</button>`).join('')}</div>${passHTML()}`);
+    startTimer(getTimeForRound(),()=>handleWrong());
+}
+
+// ===== 6. 解凍チャレンジ =====
+function mg_ice(){
+    G.miniType='🧊 解凍チャレンジ';updateHUD();
+    const allC=[...TC,...DC.slice(0,6)];const hc=pick(allC);const isT=TC.includes(hc);
+    const goal=6+Math.min(Math.floor(G.round/3),8);let taps=0,melted=false;
+    window.iceTap=function(){
+        if(G.answered||melted)return;taps++;
+        const pct=Math.min(100,taps/goal*100);const p=document.getElementById('ice-prog');if(p)p.style.width=pct+'%';
+        const ov=document.getElementById('ice-ov');if(ov)ov.style.opacity=1-(taps/goal);
+        const ch=document.getElementById('ice-ch');if(ch)ch.style.color=`rgba(255,255,255,${taps/goal})`;
+        document.getElementById('ice-cnt').textContent=Math.min(taps,goal);
+        if(taps>=goal){melted=true;document.getElementById('ice-blk').classList.add('melted');document.getElementById('ice-judge').style.display='flex'}
+    };
+    window.iceJudge=function(a){if(G.answered)return;a===isT?handleCorrect():handleWrong()};
+    render(`<div class="mini-label">🧊 解凍チャレンジ</div><div class="question-text">氷を溶かして文字を確認！<br><small style="color:#666">「くうきがない」の文字なら⭕</small></div><div class="ice-block" id="ice-blk" onclick="iceTap()"><div class="ice-overlay" id="ice-ov"></div><div class="ice-char" id="ice-ch">${hc}</div></div><div style="color:#888;font-size:.9em"><span id="ice-cnt">0</span> / ${goal}</div><div style="width:60%;height:10px;background:#222;border-radius:5px;overflow:hidden;margin:8px 0;border:1px solid #444"><div id="ice-prog" style="height:100%;width:0%;background:linear-gradient(90deg,#00ccff,#00ff88);border-radius:4px;transition:width .1s"></div></div><div class="button-container" id="ice-judge" style="display:none"><button class="game-btn btn-correct" onclick="iceJudge(true)">⭕ くうきがない</button><button class="game-btn btn-wrong" onclick="iceJudge(false)">✖ 違う</button></div>${passHTML()}`);
+    startTimer(getTimeForRound()+3000,()=>handleWrong());
+}
+
+// ===== 7. カード記憶 =====
+function mg_cardMem(){
+    G.miniType='🎪 カード記憶';updateHUD();
+    const tc=pick(TC);const decs=shuffle(DC.filter(c=>c!==tc)).slice(0,5);
+    let cards=shuffle([tc,...decs]);
+    render(`<div class="mini-label">🎪 カード記憶</div><div class="question-text">「<span class="highlight">${tc}</span>」の位置を覚えろ！</div><div class="card-grid-sm">${cards.map((c,i)=>`<div class="match-card face-up" id="mc-${i}">${c}</div>`).join('')}</div>`);
+    const st=Math.max(600,1800-G.round*50);
+    const tid=setTimeout(()=>{
+        if(G.answered)return;
+        window.cardPick=function(i){if(G.answered)return;const el=document.getElementById('mc-'+i);el.textContent=cards[i];el.className='match-card face-up';cards[i]===tc?handleCorrect():handleWrong()};
+        render(`<div class="mini-label">🎪 カード記憶</div><div class="question-text">「<span class="highlight">${tc}</span>」はどこ？</div><div class="card-grid-sm">${cards.map((c,i)=>`<div class="match-card face-down" id="mc-${i}" onclick="cardPick(${i})"></div>`).join('')}</div>${passHTML()}`);
+        startTimer(getTimeForRound(),()=>handleWrong());
+    },st);G.fallIntervals.push(tid);
+}
+
+// ===== 8. 点滅チャレンジ =====
+function mg_flashChar(){
+    G.miniType='🔦 点滅チャレンジ';updateHUD();
+    const correct=pick(TC);const ft=Math.max(200,800-G.round*30);
+    render(`<div class="mini-label">🔦 点滅チャレンジ</div><div class="question-text">一瞬光る「<em>くうきがない</em>」の文字を見逃すな！</div><div style="font-size:5em;font-weight:900;color:#fff;text-shadow:0 0 40px #00ccbb;margin:30px 0">${correct}</div>`);
+    const tid=setTimeout(()=>{
+        if(G.answered)return;const decs=shuffle(DC.filter(c=>c!==correct)).slice(0,3);const choices=shuffle([correct,...decs]);
+        window.flashAns=function(ch){if(G.answered)return;ch===correct?handleCorrect():handleWrong()};
+        render(`<div class="mini-label">🔦 点滅チャレンジ</div><div class="question-text">今光った文字は？</div><div style="font-size:5em;color:#222;margin:20px 0">？</div><div class="quiz-choices">${choices.map(c=>`<button class="quiz-choice" onclick="flashAns('${c}')">${c}</button>`).join('')}</div>${passHTML()}`);
+        startTimer(getTimeForRound(),()=>handleWrong());
+    },ft);G.fallIntervals.push(tid);
+}
+
+// ===== 9. ダイス文字 =====
+function mg_dice(){
+    G.miniType='🎲 ダイス文字';updateHUD();
+    const dn=1+Math.floor(Math.random()*6);const correct=TC[dn-1];
+    const decs=shuffle(DC.filter(c=>c!==correct)).slice(0,3);const choices=shuffle([correct,...decs]);
+    const de=['⚀','⚁','⚂','⚃','⚄','⚅'];
+    window.diceAns=function(ch){if(G.answered)return;ch===correct?handleCorrect():handleWrong()};
+    render(`<div class="mini-label">🎲 ダイス文字</div><div class="question-text">「<em>くうきがない</em>」の<br>サイコロの目の文字は？</div><div class="dice-box">${de[dn-1]}</div><div style="color:#888;font-size:.9em;margin-bottom:10px">${dn}文字目</div><div class="quiz-choices">${choices.map(c=>`<button class="quiz-choice" onclick="diceAns('${c}')">${c}</button>`).join('')}</div>${passHTML()}`);
+    startTimer(getTimeForRound(),()=>handleWrong());
+}
+
+// ===== 10. 間違い探し =====
+function mg_findError(){
+    G.miniType='🔍 間違い探し';updateHUD();
+    const ei=Math.floor(Math.random()*6);const ec=pick(DC.filter(c=>c!==TC[ei]));
+    let disp=[...TC];disp[ei]=ec;
+    window.errorTap=function(i){if(G.answered)return;i===ei?handleCorrect():handleWrong()};
+    render(`<div class="mini-label">🔍 間違い探し</div><div class="question-text">「<em>くうきがない</em>」に紛れた<br>間違いの文字をタップ！</div><div style="display:flex;gap:5px;margin:20px 0;justify-content:center">${disp.map((c,i)=>`<div class="wave-char-item" onclick="errorTap(${i})">${c}</div>`).join('')}</div>${passHTML()}`);
+    startTimer(getTimeForRound(),()=>handleWrong());
+}
+
+// ===== 11. 多い文字 =====
+function mg_majority(){
+    G.miniType='📊 多い文字';updateHUD();
+    const cands=shuffle([...TC]).slice(0,3);const counts={};
+    cands.forEach(c=>counts[c]=2+Math.floor(Math.random()*3));
+    const maxChar=cands[0];counts[maxChar]=Math.max(...Object.values(counts))+2;
+    let grid=[];for(const[ch,cnt]of Object.entries(counts))for(let i=0;i<cnt;i++)grid.push(ch);
+    while(grid.length<20)grid.push(pick(DC));grid=shuffle(grid);
+    window.majAns=function(ch){if(G.answered)return;ch===maxChar?handleCorrect():handleWrong()};
+    render(`<div class="mini-label">📊 多い文字</div><div class="question-text">「<em>くうきがない</em>」の文字で<br>一番多いのは？</div><div class="count-area">${grid.map(c=>`<div class="count-char">${c}</div>`).join('')}</div><div class="count-choices">${cands.map(c=>`<button class="count-choice" onclick="majAns('${c}')">${c}</button>`).join('')}</div>${passHTML()}`);
+    startTimer(getTimeForRound()+2000,()=>handleWrong());
+}
+
+// ===== 12. 残像チャレンジ =====
+function mg_afterimage(){
+    G.miniType='⏰ 残像チャレンジ';updateHUD();
+    const hi=Math.floor(Math.random()*6);const hc=TC[hi];
+    render(`<div class="mini-label">⏰ 残像チャレンジ</div><div class="question-text">光った文字を覚えろ！</div><div style="font-size:2.5em;font-weight:900;margin:20px 0;letter-spacing:.15em">${TC.map((c,i)=>i===hi?`<span style="color:#ffff00;text-shadow:0 0 25px #ffff00">${c}</span>`:`<span style="color:#fff">${c}</span>`).join('')}</div>`);
+    const st=Math.max(400,1400-G.round*40);
+    const tid=setTimeout(()=>{
+        if(G.answered)return;const decs=shuffle(TC.filter(c=>c!==hc)).slice(0,3);const choices=shuffle([hc,...decs]);
+        window.afterAns=function(ch){if(G.answered)return;ch===hc?handleCorrect():handleWrong()};
+        render(`<div class="mini-label">⏰ 残像チャレンジ</div><div class="question-text">光っていた文字は？</div><div style="font-size:2.5em;font-weight:900;margin:20px 0;letter-spacing:.15em;color:#333">？？？？？？</div><div class="quiz-choices">${choices.map(c=>`<button class="quiz-choice" onclick="afterAns('${c}')">${c}</button>`).join('')}</div>${passHTML()}`);
+        startTimer(getTimeForRound(),()=>handleWrong());
+    },st);G.fallIntervals.push(tid);
+}
+
+// ===== 13. 鏡文字 =====
+function mg_mirror(){
+    G.miniType='🪃 鏡文字';updateHUD();
+    const correct=pick(TC);const decs=shuffle(DC.filter(c=>c!==correct)).slice(0,3);const choices=shuffle([correct,...decs]);
+    const tfs=['scaleX(-1)','scaleY(-1)','rotate(180deg)','scaleX(-1) rotate(90deg)'];const tf=pick(tfs);
+    window.mirrorAns=function(ch){if(G.answered)return;ch===correct?handleCorrect():handleWrong()};
+    render(`<div class="mini-label">🪃 鏡文字</div><div class="question-text">「<em>くうきがない</em>」の<br>反転した文字は何？</div><div style="font-size:5em;font-weight:900;color:#fff;text-shadow:0 0 30px #cc00ff;margin:20px 0;display:inline-block;transform:${tf}">${correct}</div><div class="quiz-choices">${choices.map(c=>`<button class="quiz-choice" onclick="mirrorAns('${c}')">${c}</button>`).join('')}</div>${passHTML()}`);
+    startTimer(getTimeForRound(),()=>handleWrong());
+}
+
+// ===== 14. 組み立て =====
+function mg_build(){
+    G.miniType='🏗️ 組み立て';updateHUD();
+    let ci=0;
+    function renderB(){
+        const progress=TC.map((c,i)=>i<ci?`<div class="pyramid-slot filled">${c}</div>`:i===ci?`<div class="pyramid-slot current">？</div>`:`<div class="pyramid-slot">_</div>`).join('');
+        const correct=TC[ci];const decs=shuffle(DC.filter(c=>c!==correct)).slice(0,2);const choices=shuffle([correct,...decs]);
+        render(`<div class="mini-label">🏗️ 組み立て</div><div class="question-text">「<em>くうきがない</em>」を組み立てろ！</div><div style="display:flex;gap:5px;margin:15px 0;justify-content:center">${progress}</div><div class="pyramid-choices">${choices.map(c=>`<button class="quiz-choice" onclick="buildPick('${c}')" style="width:70px;height:70px;font-size:1.5em">${c}</button>`).join('')}</div>${passHTML()}`);
+    }
+    window.buildPick=function(ch){if(G.answered)return;if(ch===TC[ci]){ci++;ci>=TC.length?handleCorrect():renderB()}else handleWrong()};
+    renderB();startTimer(getTimeForRound()+3000,()=>handleWrong());
+}
+
+// ===== 15. 速攻2択 =====
+function mg_binary(){
+    G.miniType='⚡ 速攻2択';updateHUD();
+    const tc=pick(TC);const decoy=pick(DC.filter(c=>c!==tc));const opts=shuffle([tc,decoy]);
+    window.binPick=function(ch){if(G.answered)return;TC.includes(ch)?handleCorrect():handleWrong()};
+    render(`<div class="mini-label">⚡ 速攻2択</div><div class="question-text">「<em>くうきがない</em>」に<br>含まれるのはどっち？</div><div class="rapid-pair">${opts.map(c=>`<div class="rapid-option" onclick="binPick('${c}')">${c}</div>`).join('')}</div>${passHTML()}`);
+    startTimer(Math.max(2000,getTimeForRound()-500),()=>handleWrong());
+}
+
+// ============================================================
+const miniGames=[mg_rhythm,mg_charMath,mg_anagram,mg_chase,mg_spin,mg_ice,mg_cardMem,mg_flashChar,mg_dice,mg_findError,mg_majority,mg_afterimage,mg_mirror,mg_build,mg_binary];
+
+function playRound(){
+    let avail=miniGames.filter((_,i)=>i!==G.lastMiniIdx);
+    if(!avail.length)avail=miniGames;
+    const game=pick(avail);G.lastMiniIdx=miniGames.indexOf(game);game();
+}
+
+// ========== 結果画面 ==========
+function endGame(){
+    stopTimer();clearFI();
+    const isCleared=G.round>=CLEAR_ROUND,isNew=G.score>highScore;
+    if(isNew){highScore=G.score;localStorage.setItem('kuukiEXHighScore',highScore);document.getElementById('best-score').textContent=highScore.toLocaleString()}
+    if(isCleared)localStorage.setItem('gameClear_'+GAME_NUMBER,'true');
+    const result=document.getElementById('result'),auroraEl=document.getElementById('result-aurora');
+    if(isCleared){result.className='screen clear-bg';auroraEl.className='result-aurora clear-aurora'}
+    else{result.className='screen lose-bg';auroraEl.className='result-aurora lose-aurora'}
+    document.getElementById('result-content').innerHTML=`
+        ${isCleared?'<div class="clear-badge">🎯 STAGE CLEAR!</div>':''}
+        ${isNew?'<div class="highscore-badge">🎉 NEW HIGH SCORE!</div>':''}
+        <div class="result-icon-container"><div class="icon-ring ${isCleared?'clear-ring':''}"></div><div class="result-icon">${isCleared?'🏆':(isNew?'⭐':'💨')}</div></div>
+        <div class="result-title ${isCleared?'title-clear':'title-lose'}">${isCleared?'GAME CLEAR!':'GAME OVER'}</div>
+        <div class="result-score-box"><div class="result-score-label">Total Score</div><div class="result-score-value" id="score-counter">0</div></div>
+        <div class="result-stats">
+            <div class="stat-row"><span>🎯 到達ラウンド</span><span class="stat-value ${isCleared?'green':'cyan'}">${G.round}</span></div>
+            <div class="stat-row"><span>🔥 最大コンボ</span><span class="stat-value gold">${G.maxCombo}</span></div>
+            <div class="stat-row"><span>⏭ パス使用</span><span class="stat-value gray">${G.passUsed} / ${G.maxPass}</span></div>
+            <div class="stat-row"><span>🏆 ハイスコア</span><span class="stat-value pink">${highScore.toLocaleString()}</span></div>
+        </div>
+        ${isCleared?`<div class="result-buttons"><button class="btn btn-green" onclick="goBack()">✨ ステージ選択へ</button><button class="btn btn-cyan btn-small" onclick="startGame()">🔄 もう一度</button></div><div class="redirect-msg">3秒後にメニューへ戻ります...</div>`:`<div class="result-buttons"><button class="btn" onclick="startGame()">🔄 RETRY</button><button class="btn btn-cyan btn-small" onclick="showScreen('title')">🏠 TITLE</button></div>`}`;
+    showScreen('result');
+    let cur=0;const target=G.score,step=target/(1500/16);const counter=document.getElementById('score-counter');
+    const cu=setInterval(()=>{cur+=step;if(cur>=target){cur=target;clearInterval(cu)}counter.textContent=Math.floor(cur).toLocaleString()},16);
+    if(isCleared||isNew){createConfetti();createStars()}
+    if(isCleared)setTimeout(goBack,3000);
+}
+</script>
+</body>
+</html>
