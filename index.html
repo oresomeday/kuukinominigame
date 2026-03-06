@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>くうきがない。</title>
+<title>くうきがなん。</title>
 <style>
 * {
   margin: 0;
@@ -175,6 +175,26 @@ body {
   font-size: 0.8em;
 }
 
+.idk-btn {
+  margin-top: 10px;
+  padding: 12px 35px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 30px;
+  color: #889;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.idk-btn:active {
+  transform: scale(0.95);
+  background: rgba(255,255,255,0.12);
+  color: #aab;
+}
+
 #menuScreen {
   background: radial-gradient(ellipse at top, #1a1a3e 0%, #0a0a1a 70%);
 }
@@ -203,12 +223,6 @@ body {
 .menu-subtitle {
   color: #667;
   font-size: 0.85em;
-}
-
-.menu-order-notice {
-  color: #ff6b9d;
-  font-size: 0.75em;
-  margin-top: 4px;
 }
 
 .hint-bar {
@@ -281,32 +295,8 @@ body {
   transition: opacity 0.3s;
 }
 
-.game-card:active:not(.locked) {
+.game-card:active {
   transform: scale(0.97);
-}
-
-.game-card.locked {
-  opacity: 0.35;
-  pointer-events: none;
-  filter: grayscale(0.7);
-}
-
-.game-card.current-game {
-  border: 2px solid rgba(255,255,255,0.4);
-  box-shadow: 0 0 25px rgba(108,99,255,0.3);
-}
-
-.game-card.current-game::after {
-  content: '▶ NEXT';
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  font-size: 0.55em;
-  padding: 3px 8px;
-  background: rgba(108,99,255,0.5);
-  border-radius: 10px;
-  color: #fff;
-  font-weight: 700;
 }
 
 .game-card:nth-child(1) { background: linear-gradient(135deg, rgba(255,107,157,0.2), rgba(255,107,157,0.05)); }
@@ -376,11 +366,6 @@ body {
   color: #4ecdc4;
 }
 
-.game-status.locked-status {
-  background: rgba(255,255,255,0.05);
-  color: #444;
-}
-
 .back-to-input-btn {
   margin-top: 20px;
   padding: 14px 40px;
@@ -400,7 +385,6 @@ body {
   transform: scale(0.95);
 }
 
-/* ===== ENDING SCREEN - 豪華版 ===== */
 #endingScreen {
   background: #000;
   text-align: center;
@@ -621,13 +605,6 @@ body {
   animation: charGlow 2s ease-in-out infinite;
 }
 
-.ending-char:nth-child(1) { animation-delay: 0s; }
-.ending-char:nth-child(2) { animation-delay: 0.15s; }
-.ending-char:nth-child(3) { animation-delay: 0.3s; }
-.ending-char:nth-child(4) { animation-delay: 0.45s; }
-.ending-char:nth-child(5) { animation-delay: 0.6s; }
-.ending-char:nth-child(6) { animation-delay: 0.75s; }
-
 @keyframes charGlow {
   0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.2), inset 0 0 20px rgba(255,215,0,0.05); }
   50% { box-shadow: 0 0 35px rgba(255,215,0,0.5), inset 0 0 30px rgba(255,215,0,0.1); }
@@ -731,7 +708,6 @@ body {
   background: rgba(255,255,255,0.15);
 }
 
-/* ===== sparkle ring around crown ===== */
 .sparkle-ring {
   position: absolute;
   width: 120px;
@@ -947,13 +923,15 @@ body {
       <div class="key enter-key" data-action="submit">✓ 決定</div>
     </div>
   </div>
+
+  <!-- ★ 追加：わからないボタン -->
+  <button class="idk-btn" onclick="goToMenu()">🎮 わからない…ヒントを集める</button>
 </div>
 
 <div class="screen" id="menuScreen">
   <div class="menu-header fade-in">
     <div class="menu-title">GAME SELECT</div>
     <div class="menu-subtitle">ゲームをクリアしてヒントを集めよう</div>
-    <div class="menu-order-notice">※ 上から順番にクリアしてください</div>
   </div>
 
   <div class="hint-bar fade-in" id="hintBar">
@@ -1019,7 +997,6 @@ body {
   <button class="back-to-input-btn" onclick="goToInput()">🔮 合言葉入力へ</button>
 </div>
 
-<!-- ===== 豪華エンディング画面 ===== -->
 <div class="screen" id="endingScreen">
   <div class="ending-fireworks" id="endingFireworks"></div>
   <div class="confetti-container" id="confettiContainer"></div>
@@ -1049,14 +1026,7 @@ body {
       あなたは真の勇者です
     </div>
 
-    <div class="ending-password-reveal">
-      <div class="ending-char">く</div>
-      <div class="ending-char">う</div>
-      <div class="ending-char">き</div>
-      <div class="ending-char">が</div>
-      <div class="ending-char">な</div>
-      <div class="ending-char">ん</div>
-    </div>
+    <div class="ending-password-reveal" id="endingChars"></div>
 
     <div class="ending-btn-container">
       <a class="ending-btn" href="https://youtu.be/Mj2tXt5ErGI?si=3Lu6kAwAIK1qe_hP" target="_blank" rel="noopener">
@@ -1072,12 +1042,25 @@ body {
 
 <script>
 const TOTAL = 6;
+
+// ★★★ 合言葉はここだけ変えればOK ★★★
 const ANSWER = ['く','う','き','が','な','ん'];
-const HINT_CHARS = ['く','う','き','が','な','ん'];
 
 let currentIndex = 0;
 let inputChars = Array(TOTAL).fill('');
 let clearedGames = JSON.parse(localStorage.getItem('clearedGames') || '[]');
+
+function buildEndingChars() {
+  const container = document.getElementById('endingChars');
+  container.innerHTML = '';
+  ANSWER.forEach((char, i) => {
+    const div = document.createElement('div');
+    div.className = 'ending-char';
+    div.textContent = char;
+    div.style.animationDelay = (i * 0.15) + 's';
+    container.appendChild(div);
+  });
+}
 
 (function() {
   const c = document.getElementById('particles');
@@ -1097,7 +1080,6 @@ let clearedGames = JSON.parse(localStorage.getItem('clearedGames') || '[]');
 })();
 
 function createEndingEffects() {
-  // Fireworks
   const fw = document.getElementById('endingFireworks');
   fw.innerHTML = '';
   const fwColors = ['#ffd700','#ff6b9d','#6c63ff','#4ecdc4','#ff4500','#00ff88','#ff00ff','#00ceff'];
@@ -1112,7 +1094,6 @@ function createEndingEffects() {
     fw.appendChild(f);
   }
 
-  // Confetti
   const cc = document.getElementById('confettiContainer');
   cc.innerHTML = '';
   const confettiColors = ['#ffd700','#ff6b9d','#6c63ff','#4ecdc4','#ff4500','#00ff88','#b464ff','#00ceff','#fff'];
@@ -1134,6 +1115,7 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if (id === 'endingScreen') {
+    buildEndingChars();
     createEndingEffects();
   }
 }
@@ -1214,13 +1196,6 @@ document.getElementById('charBoxes').addEventListener('click', (e) => {
   updateCharBoxes();
 });
 
-function getNextGame() {
-  for (let i = 1; i <= TOTAL; i++) {
-    if (!clearedGames.includes(i)) return i;
-  }
-  return null;
-}
-
 function goToMenu() {
   updateMenu();
   showScreen('menuScreen');
@@ -1230,7 +1205,7 @@ function goToInput() {
   inputChars = Array(TOTAL).fill('');
   clearedGames.forEach(gNum => {
     const idx = gNum - 1;
-    if (idx >= 0 && idx < TOTAL) inputChars[idx] = HINT_CHARS[idx];
+    if (idx >= 0 && idx < TOTAL) inputChars[idx] = ANSWER[idx];
   });
   currentIndex = inputChars.findIndex(c => c === '');
   if (currentIndex === -1) currentIndex = TOTAL;
@@ -1238,11 +1213,11 @@ function goToInput() {
   showScreen('inputScreen');
 }
 
+// ★ 順番制を撤廃：全ゲーム常にアクセス可能
 function updateMenu() {
-  const nextGame = getNextGame();
   document.querySelectorAll('.hint-char').forEach((el, i) => {
     if (clearedGames.includes(i + 1)) {
-      el.textContent = HINT_CHARS[i];
+      el.textContent = ANSWER[i];
       el.classList.add('revealed');
     } else {
       el.textContent = '？';
@@ -1256,14 +1231,9 @@ function updateMenu() {
     if (clearedGames.includes(gNum)) {
       status.textContent = 'クリア済 ✓';
       status.className = 'game-status cleared';
-    } else if (gNum === nextGame) {
-      card.classList.add('current-game');
-      status.textContent = '挑戦可能';
-      status.className = 'game-status not-cleared';
     } else {
-      card.classList.add('locked');
-      status.textContent = '🔒 ロック';
-      status.className = 'game-status locked-status';
+      status.textContent = '挑戦する';
+      status.className = 'game-status not-cleared';
     }
   });
 }
@@ -1299,5 +1269,4 @@ function restart() {
 </script>
 
 </body>
-
 </html>
